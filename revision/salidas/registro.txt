@@ -1,0 +1,7 @@
+Revisión iniciada: 2026-11-02 18:51:21 
+R1_bases             OK       0.4 min  OK
+R2_glm               OK       0.2 min  OK
+R3_random_forest     OK       0.3 min  OK
+R4_xgboost           OK       0.9 min  OK
+R5_series_tiempo     OK       2.6 min  OK
+Revisión terminada: 2026-11-02 18:55:42 

@@ -1,0 +1,85 @@
+---
+title: "Reporte técnico del análisis exploratorio (EDA)"
+subtitle: "Proyecto Stanford · Seguridad Ciudadana · Cantón Riobamba (Flores y Cubijíes)"
+author: "Equipo 1 · UNACH (responsable: Sonia Calle)"
+date: today
+lang: es
+format:
+  html:
+    toc: true
+    number-sections: true
+    embed-resources: true
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+```{r}
+# SONIA · Días 11 y 13. Requiere haber ejecutado los scripts 01 a 09.
+# Para generarlo: abrir este archivo en RStudio y pulsar "Render".
+library(dplyr); library(readxl); library(knitr)
+opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+tab <- function(archivo, hoja) read_excel(file.path("03_resultados/tablas", archivo), sheet = hoja)
+img <- function(nombre) include_graphics(file.path("03_resultados/graficos", nombre))
+f <- function(x) format(x, big.mark = ".", decimal.mark = ",")
+rb <- readRDS("02_datos_limpios/riobamba_depurada.rds")
+sc <- rb %>% filter(servicio == "Seguridad Ciudadana")
+```
+
+# Datos
+
+Se analizaron `r f(nrow(rb))` incidentes del cantón Riobamba registrados por el ECU 911 entre el `r format(min(rb$fecha), "%d/%m/%Y")` y el `r format(max(rb$fecha), "%d/%m/%Y")`. De ellos, `r f(nrow(sc))` (`r round(100 * nrow(sc) / nrow(rb), 1)` %) corresponden a **Seguridad Ciudadana**, el foco del proyecto.
+
+# Frecuencias por servicio y subtipo
+
+```{r}
+img("05_1_servicios_riobamba.png")
+img("05_2_subtipos_seguridad.png")
+kable(head(tab("05_frecuencias.xlsx", "Subtipos Seg Ciudadana"), 15))
+```
+
+# Análisis temporal
+
+```{r}
+img("06_0_por_anio.png")
+kable(tab("06_temporal.xlsx", "Por anio"))
+img("06_1_tendencia_diaria.png")
+img("06_2_mensual.png")
+img("06_3_dia_semana.png")
+```
+
+# Análisis espacial
+
+```{r}
+img("05_3_parroquias_seguridad.png")
+if (file.exists("03_resultados/graficos/08_2_mapa_incidentes_parroquia.png")) img("08_2_mapa_incidentes_parroquia.png")
+if (file.exists("03_resultados/graficos/08_3_mapa_por_anio.png")) img("08_3_mapa_por_anio.png")
+kable(tab("09_features.xlsx", "Tabla mapas"))
+```
+
+# Flores y Cubijíes
+
+```{r}
+kable(tab("06_temporal.xlsx", "Flores-Cubijies por anio"))
+img("05_4_flores_cubijies_subtipos.png")
+img("06_5_flores_cubijies_anio.png")
+```
+
+# Variables para los modelos (Feature Store)
+
+```{r}
+img("09_1_lag1_vs_actual.png")
+img("09_2_promedios_moviles_foco.png")
+fs <- readRDS("02_datos_limpios/feature_store.rds")
+```
+
+La matriz de características tiene `r f(nrow(fs))` filas (parroquia × semana) y `r ncol(fs)` columnas, desde la semana del `r format(min(fs$semana_inicio), "%d/%m/%Y")`.
+
+```{r}
+kable(tab("09_features.xlsx", "Correlaciones") %>% select(variable, incidentes))
+```
+
+# Conclusiones del EDA
+
+*(Completar con el equipo a partir de los resultados anteriores.)*

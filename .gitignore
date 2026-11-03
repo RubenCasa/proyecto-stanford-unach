@@ -1,0 +1,23 @@
+# Datos crudos ECU 911 (2,2 GB): se descargan de datosabiertos.gob.ec
+/emergencias_*.csv
+/incidentes_*.csv
+/incidentes_*.xlsx
+/formato-*.xlsx
+# Archivos grandes que se regeneran con los scripts
+02_datos_limpios/riobamba_depurada.csv
+04_mapas/gadm/
+# Datos de Fiscalía (nunca subir datos personales)
+01_datos_fiscalia/
+*fiscalia*.csv
+*fiscalia*.xlsx
+# R / RStudio
+.RData
+.Rhistory
+.Rproj.user/
+*.Rproj.user
+rsconnect/
+# Office / sistema
+~$*
+Thumbs.db
+.DS_Store
+_github/

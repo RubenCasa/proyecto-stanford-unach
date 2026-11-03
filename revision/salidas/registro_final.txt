@@ -1,0 +1,4 @@
+Inicio: 2026-11-02 18:57:55 
+scripts/10_modelos.R               5.8 min  OK
+scripts/11_mapas_riesgo.R          0.2 min  OK
+scripts/12_tendencia_2029.R        0.7 min  OK
