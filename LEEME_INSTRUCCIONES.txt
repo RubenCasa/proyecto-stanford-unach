@@ -1,0 +1,59 @@
+PROYECTO STANFORD · UNACH · Vinculación con la sociedad
+Análisis predictivo de patrones delictivos · Flores y Cubijíes (Riobamba)
+Seguridad Ciudadana · Base de emergencias ECU 911 · jul-2021 a sep-2026
+======================================================================
+
+LO PRIMERO: leer 05_documentos/Guia_por_estudiante.docx
+(los 24 días del cronograma: qué hace cada uno, en qué archivo y qué capturar)
+
+INSTALAR (una vez)
+ 1. R ........ https://cran.r-project.org/bin/windows/base/
+ 2. RStudio .. https://posit.co/download/rstudio-desktop/  (incluye Quarto)
+ 3. Doble clic en proyecto_stanford.Rproj
+ 4. Abrir scripts/00_instalar_paquetes.R y pulsar "Source"
+
+EJECUTAR (en orden, o todo junto con ejecutar_todo.R: 20-40 min)
+ 01_importar_unir.R ....... días 4-5   Nelcy, Melanie, Sonia, Rubén
+ 02_limpieza.R ............ día 6      Nelcy, Melanie, Sonia, Rubén
+ 03_filtro_geografico.R ... día 7      Nelcy, Melanie, Sonia, Rubén
+ 04_fechas_diccionario.R .. días 8-10  Melanie, Sonia, Nelcy
+ 05_eda_frecuencias.R ..... día 9      Nelcy, Sonia
+ 06_eda_temporal.R ........ día 10     Nelcy, Sonia
+ 07_conteos_variables.R ... días 8-10  Rubén
+ 08_mapas.R ............... días 4-11  Edgar (internet la primera vez)
+ 09_features.R ............ días 11-13 Rubén, Nelcy, Melanie, Edgar, Sonia
+ reporte_EDA.qmd .......... días 11-13 Sonia (abrir y pulsar "Render")
+ 10_modelos.R ............. días 14-19 Rubén, Nelcy, Sonia, Melanie
+ 11_mapas_riesgo.R ........ días 14-18 Edgar
+ 12_tendencia_2029.R ...... tendencia mensual hasta dic-2029: Rubén, Sonia, Edgar
+ dashboard/app.R .......... Anthony -> en la consola: shiny::runApp("dashboard")
+
+Cada script tiene secciones marcadas  # [NOMBRE] DÍA X
+
+DATOS: los 63 archivos emergencias_*.csv (2021-2023) e incidentes_* (2024-2026)
+van en esta carpeta (o en 01_datos_crudos/). No se modifican.
+Para agregar un mes nuevo: guardarlo como incidentes_<mes>_<año>.csv y
+volver a correr ejecutar_todo.R.
+
+DOCUMENTOS (05_documentos/)
+ Guia_por_estudiante.docx .............. todos
+ Matriz_de_requerimientos.xlsx ......... día 3 (Gabriela consolida)
+ Tablero_de_control.xlsx ............... Gabriela y Walter
+ Informe_tecnico_borrador.docx ......... Walter y Gabriela
+ Manual_tecnico_borrador.docx .......... Emily
+ Manual_usuario_dashboard_borrador.docx  Emily y Anthony
+ Diccionario_de_datos.xlsx y Diccionario_variables_modelo.xlsx
+   -> los generan los scripts 04 y 09 (Melanie)
+ Los formatos institucionales del ECU 911 (formato-*.xlsx) quedan como
+ referencia en la carpeta principal.
+
+RESULTADOS
+ 02_datos_limpios/      bases limpias, conteos y Feature Store
+ 03_resultados/         tablas, gráficos y modelos (métricas, pronósticos)
+ 04_mapas/              capas de parroquias y mapas interactivos
+
+SI ALGO FALLA
+ - "No se encontraron archivos": abrir el .Rproj (no el script suelto).
+ - "there is no package called ...": repetir 00_instalar_paquetes.R.
+ - Memoria insuficiente al importar: cerrar otros programas y reiniciar R
+   (Session > Restart R) antes de ejecutar 01.

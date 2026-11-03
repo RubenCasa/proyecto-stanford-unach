@@ -1,0 +1,35 @@
+wrote 2.15GB in  0s, 2.15GB/s                                                                                                                          # A tibble: 4 × 4
+  grupo      MAE  RMSE sesgo
+  <chr>    <dbl> <dbl> <dbl>
+1 Cubijies  1.73  2.13  0.78
+2 Flores    0.67  0.81  0.33
+3 Rurales   2.19  3.34 -0.1 
+4 Urbana   32.9  41.8  -0.74
+wrote 2.15GB in  0s, 2.15GB/s                                                                                                                          # A tibble: 4 × 4
+  grupo      MAE  RMSE sesgo
+  <chr>    <dbl> <dbl> <dbl>
+1 Cubijies  1.6   2     0.53
+2 Flores    0.61  0.73  0.17
+3 Rurales   2.15  3.37 -0.39
+4 Urbana   32.1  41.4  -7.64
+wrote 2.15GB in  0s, 2.15GB/s                                                                                                                          # A tibble: 4 × 4
+  grupo      MAE  RMSE  sesgo
+  <chr>    <dbl> <dbl>  <dbl>
+1 Cubijies  1.53  1.91   0.09
+2 Flores    0.62  0.71  -0.09
+3 Rurales   2.04  3.19  -0.4 
+4 Urbana   35.4  47.1  -15.5 
+wrote 2.15GB in  0s, 2.15GB/s                                                                                                                          # A tibble: 4 × 4
+  grupo      MAE  RMSE  sesgo
+  <chr>    <dbl> <dbl>  <dbl>
+1 Cubijies  1.55  1.93   0.19
+2 Flores    0.61  0.7    0.03
+3 Rurales   2.08  3.26  -0.46
+4 Urbana   32.5  43.6  -11.3 
+wrote 2.15GB in  0s, 2.15GB/s                                                                                                                          # A tibble: 4 × 4
+  grupo      MAE  RMSE  sesgo
+  <chr>    <dbl> <dbl>  <dbl>
+1 Cubijies  1.53  1.91   0.16
+2 Flores    0.62  0.7   -0.07
+3 Rurales   2.04  3.17  -0.32
+4 Urbana   33.9  45.4  -11.1 

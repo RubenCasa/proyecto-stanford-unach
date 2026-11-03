@@ -1,0 +1,13 @@
+# R1 · Modelos de referencia (lo mínimo que cualquier modelo debe superar)
+source("revision/R0_base_revision.R")
+sink("revision/salidas/R1.txt", split = TRUE)
+titulo("R1 · Referencias")
+registrar("Base semana anterior", test$lag1)
+registrar("Base promedio 4", test$ma4)
+registrar("Base promedio 8", test$ma8)
+registrar("Base promedio 12", test$ma12)
+# Promedio del último año de entrenamiento por parroquia (nivel fijo)
+nivel <- train %>% filter(semana_inicio >= CORTE - weeks(52)) %>%
+  group_by(cod_parroquia) %>% summarise(m = mean(incidentes))
+registrar("Base nivel ultimo anio", test %>% left_join(nivel, by = "cod_parroquia") %>% pull(m))
+sink()

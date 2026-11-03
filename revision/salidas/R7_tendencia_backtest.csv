@@ -1,0 +1,25 @@
+grupo,modelo,MAE_mensual,error_pct,sesgo_pct
+CUBIJIES,ETS amortiguado,3.12,26.5,3
+CUBIJIES,ARIMA,3.18,27,7.7
+CUBIJIES,ETS auto,3.19,27.1,8.5
+CUBIJIES,Tendencia log-lineal,3.55,30.1,-11.8
+CUBIJIES,Promedio historico,4.13,35.1,26.1
+CUBIJIES,Ingenuo estacional,4.96,42,18
+FLORES,ARIMA,1.34,47.2,4.1
+FLORES,ETS auto,1.34,47.2,4.1
+FLORES,Promedio historico,1.34,47.2,4.1
+FLORES,ETS amortiguado,1.38,48.5,-11.4
+FLORES,Tendencia log-lineal,1.73,61,-19.8
+FLORES,Ingenuo estacional,1.83,64.7,-8.8
+Rurales,Promedio historico,5.3,19.5,10
+Rurales,ARIMA,5.53,20.3,-7.7
+Rurales,ETS amortiguado,6.33,23.2,-13.3
+Rurales,Ingenuo estacional,6.6,24.2,-2.2
+Rurales,Tendencia log-lineal,7.85,28.8,-17.9
+Rurales,ETS auto,8.02,29.4,-20.5
+Urbana,Tendencia log-lineal,134.02,3.9,0.7
+Urbana,ETS auto,214.82,6.2,-2.1
+Urbana,ETS amortiguado,259.62,7.5,-6.1
+Urbana,Ingenuo estacional,329.62,9.5,9.5
+Urbana,ARIMA,395.81,11.5,-11.4
+Urbana,Promedio historico,821.49,23.8,23.8
