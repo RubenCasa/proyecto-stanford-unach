@@ -133,7 +133,7 @@ stopifnot(dups == 0)
 titulo("[MELANIE] Días 12-13 · Diccionario de variables nuevas")
 dicc_features <- tribble(
   ~variable, ~descripcion,
-  "incidentes", "OBJETIVO: incidentes de Seguridad Ciudadana en la parroquia y semana",
+  "incidentes", "OBJETIVO: incidentes delictivos (delitos + convivencia) en la parroquia y semana; ver 07b",
   "lag1, lag2, lag3, lag4", "Incidentes de 1, 2, 3 y 4 semanas antes",
   "lag52", "Incidentes de la misma semana del año anterior",
   "ma4, ma8, ma12", "Promedio de las 4, 8 y 12 semanas anteriores (sin incluir la actual)",

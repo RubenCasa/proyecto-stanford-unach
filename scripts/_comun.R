@@ -79,15 +79,36 @@ FERIADOS <- bind_rows(
 
 # ---- Categorías de Seguridad Ciudadana ---------------------------------------
 # (gana la primera regla que coincide)
+# Corrección del 9-nov (día 14): "\\barma" evita que "Sonidos de alarma" caiga en
+# delitos contra las personas; se agregan subtipos delictivos que antes quedaban
+# en "otros" (delitos sexuales, estupro, sicariato, trata, receptación, etc.).
 categorizar <- function(subtipo) {
   case_when(
     str_detect(subtipo, regex("sustancias sujetas|droga|microtr", TRUE)) ~ "Drogas",
-    str_detect(subtipo, regex("robo|hurto|abigeato|asalto|estafa|abuso de confianza|daño a propiedad|fraude|falsificaci", TRUE)) ~ "Delitos contra la propiedad",
-    str_detect(subtipo, regex("asesinato|homicidio|arma|disparos|agresi|violaci[oó]n|abuso sexual|acoso|secuestro|extorsi|amenaza|intimidaci|abandono de niños", TRUE)) ~ "Delitos contra las personas",
+    str_detect(subtipo, regex("robo|hurto|abigeato|asalto|estafa|abuso de confianza|daño a propiedad|fraude|falsificaci|receptaci|cachiner|usura|suplantaci|moneda falsa|tráfico de moneda|contrabando|sustracci|usurpaci|aprovechamiento il", TRUE)) ~ "Delitos contra la propiedad",
+    str_detect(subtipo, regex("asesinato|homicidio|sicariato|\\barmas?\\b|armada|disparos|explosivos|agresi|violaci[oó]n|abuso sexual|delitos sexuales|estupro|acoso|secuestro|trata de personas|desaparici[oó]n forzada|extorsi|amenaza|intimidaci|abandono de niños|persona herida", TRUE)) ~ "Delitos contra las personas",
     str_detect(subtipo, regex("violencia", TRUE)) ~ "Violencia intrafamiliar / de género",
-    str_detect(subtipo, regex("libadores|escándalo|fiestas|riña|ruido|inquilinato", TRUE)) ~ "Convivencia y orden público",
-    str_detect(subtipo, regex("desaparec|extraviado|suicidio|persona sin vida|constatar|muerte", TRUE)) ~ "Personas desaparecidas / muertes",
+    str_detect(subtipo, regex("libadores|escándalo|fiestas|riña|ruido|inquilinato|actos inmorales|exhibicionista|bebidas alcohólicas|eventos clandestinos|eventos ilegales", TRUE)) ~ "Convivencia y orden público",
+    str_detect(subtipo, regex("desaparec|desaparici[oó]n de persona|extraviado|suicidio|persona sin vida|constatar|muerte|abandono de (persona|adultos)", TRUE)) ~ "Personas desaparecidas / muertes",
     TRUE ~ "Servicio policial preventivo y otros"
+  )
+}
+
+# ---- Tipo de registro (día 14 · definición del problema predictivo) ----------
+# Seguridad Ciudadana mezcla hechos (delitos, convivencia) con pedidos de
+# servicio (patrullaje) y trámites (fichas de datos, boletas, resguardo de
+# valores). Solo los hechos son "patrones delictivos".
+CAT_DELITO <- c("Delitos contra la propiedad", "Delitos contra las personas",
+                "Violencia intrafamiliar / de género", "Drogas")
+CAT_DELICTIVAS <- c(CAT_DELITO, "Convivencia y orden público")
+tipo_registro <- function(categoria, subtipo) {
+  case_when(
+    is.na(categoria) ~ NA_character_,
+    categoria %in% CAT_DELITO ~ "Delito",
+    categoria == "Convivencia y orden público" ~ "Convivencia y orden público",
+    categoria == "Personas desaparecidas / muertes" ~ "Personas desaparecidas / muertes",
+    str_detect(subtipo, regex("patrullaje|sospechosa|alarma|botón|presencia policial|encargos domiciliarios|custodia policial en lugares", TRUE)) ~ "Servicio policial solicitado",
+    TRUE ~ "Trámite u operativo"
   )
 }
 

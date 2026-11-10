@@ -12,6 +12,7 @@ pasos <- c("scripts/01_importar_unir.R",      # Días 4-5  · Nelcy, Melanie, So
            "scripts/05_eda_frecuencias.R",    # Día 9     · Nelcy, Sonia
            "scripts/06_eda_temporal.R",       # Día 10    · Nelcy, Sonia
            "scripts/07_conteos_variables.R",  # Días 8-10 · Rubén
+           "scripts/07b_objetivo_delictivo.R", # Días 14-15 · Sonia, Melanie, Rubén, Nelcy (objetivo delictivo)
            "scripts/08_mapas.R",              # Días 4-11 · Edgar (internet la 1.a vez)
            "scripts/09_features.R",           # Días 11-13· Rubén, Nelcy, Melanie, Edgar, Sonia
            "scripts/10_modelos.R",            # Días 14-19· Rubén, Nelcy, Sonia, Melanie

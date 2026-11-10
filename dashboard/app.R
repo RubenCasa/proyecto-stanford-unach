@@ -1,6 +1,7 @@
 # =============================================================================
 # PROYECTO STANFORD · dashboard/app.R  (versión 2)
-# Dashboard predictivo de Seguridad Ciudadana · Riobamba (Flores y Cubijíes)
+# Dashboard predictivo de patrones delictivos · Riobamba (Flores y Cubijíes)
+# Los pronósticos son de "incidentes delictivos" = delitos + convivencia (día 14)
 # Responsable: ANTHONY JOEL CATAGUA CHULCA (Equipo 2) · mapas: EDGAR CHAMBA
 #
 # Pestañas:
@@ -69,7 +70,8 @@ grafico <- function(g, alto = NULL, leyenda = TRUE) {
 }
 TITULO_PROYECTO <- paste("Análisis predictivo de patrones delictivos mediante técnicas de Ciencia de",
                          "Datos e Inteligencia Artificial para el fortalecimiento de la seguridad ciudadana 2026–2029")
-# Categorías consideradas "patrones delictivos" (sin pedidos de patrullaje ni otros servicios)
+# Categorías consideradas "patrones delictivos" (= objetivo de los modelos desde el día 14,
+# ver scripts/07b_objetivo_delictivo.R): delitos + convivencia; sin patrullaje ni trámites
 CAT_DELICTIVAS <- c("Delitos contra la propiedad", "Delitos contra las personas",
                     "Violencia intrafamiliar / de género", "Drogas", "Convivencia y orden público")
 EQUIPO <- tibble::tribble(
@@ -108,9 +110,9 @@ ui <- page_sidebar(
         actionLink("rurales", "Solo rurales")),
     selectInput("servicio", "Servicio", choices = sort(unique(datos$servicio)),
                 selected = "Seguridad Ciudadana", multiple = TRUE),
-    input_switch("solo_delictivo", "Solo patrones delictivos", value = FALSE),
+    input_switch("solo_delictivo", "Solo patrones delictivos", value = TRUE),
     div(class = "small text-muted mb-2 mt-n2",
-        "Excluye pedidos de patrullaje, personas desaparecidas y otros servicios."),
+        "Delitos + convivencia (lo que predicen los modelos). Excluye pedidos de patrullaje, trámites y personas desaparecidas."),
     selectizeInput("categoria", "Categoría (vacío = todas)", choices = categorias,
                    multiple = TRUE, options = list(placeholder = "Todas las categorías")),
     selectizeInput("subtipo", "Subtipo (vacío = todos)", choices = NULL, multiple = TRUE,

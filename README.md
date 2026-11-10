@@ -9,7 +9,7 @@ Zona de estudio: cantón Riobamba (Chimborazo), con foco en las parroquias **Flo
 
 | Carpeta | Contenido |
 |---|---|
-| `scripts/` | Código R del proyecto, del 01 al 12 (importación → limpieza → EDA → mapas → features → modelos → riesgo → tendencia 2029). `_comun.R` tiene rutas y funciones compartidas. |
+| `scripts/` | Código R del proyecto, del 01 al 12 (importación → limpieza → EDA → objetivo delictivo (07b) → mapas → features → modelos → riesgo → tendencia 2029). `_comun.R` tiene rutas y funciones compartidas. |
 | `revision/` | Revisión de modelos uno por uno (R0–R7) y sus salidas. |
 | `dashboard/` | Dashboard Shiny (`app.R`) y script de capturas. |
 | `02_datos_limpios/` | Bases depuradas en `.rds` y el Feature Store (lo necesario para el dashboard). |
@@ -32,6 +32,14 @@ Zona de estudio: cantón Riobamba (Chimborazo), con foco en las parroquias **Flo
    Los datos crudos (≈2,2 GB) no se suben a GitHub por su tamaño.
 
 Más detalle en `LEEME_INSTRUCCIONES.txt` y en `05_documentos/Manual_tecnico_borrador.docx`.
+
+## Qué se predice (desde el día 14, 9-nov-2026)
+
+Seguridad Ciudadana del ECU 911 mezcla hechos con pedidos de servicio y trámites. Solo cerca del 13 % son delitos:
+el 46 % son pedidos de patrullaje y alarmas, el 16 % trámites (fichas de datos, boletas, resguardo de valores).
+Por eso la variable objetivo es **incidentes delictivos = delitos + convivencia y orden público** por parroquia y semana
+(`scripts/07b_objetivo_delictivo.R`). Lo que bajó entre 2021 y 2026 fueron sobre todo los pedidos de patrullaje (de 82 a 52 por día) y, hasta 2023,
+la convivencia; los delitos se mantienen (entre 16 y 21 por día en el cantón).
 
 ## Resultados principales
 
