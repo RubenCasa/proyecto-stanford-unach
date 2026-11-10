@@ -32,8 +32,14 @@ n_registros <- nrow(rb)
 titulo("[SONIA] Día 14 · Tipo de registro de cada subtipo")
 rb <- rb %>%
   mutate(categoria = if_else(servicio == SERVICIO_FOCO, categorizar(subtipo), NA_character_),
-         tipo_registro = tipo_registro(categoria, subtipo),
+         tipo_registro = if_else(servicio == SERVICIO_FOCO & subtipo == servicio,
+                                 "Sin subtipo (feb-2023)", tipo_registro(categoria, subtipo)),
          delictivo = tipo_registro %in% c("Delito", "Convivencia y orden público"))
+# En feb-2023 el ECU 911 publicó todo Seguridad Ciudadana con subtipo genérico
+# ("Seguridad Ciudadana"): no se sabe cuáles fueron delitos. Esos registros se
+# reparten con la proporción de cada parroquia en los meses vecinos (dic-2022 a
+# abr-2023) para no dejar un mes en cero.
+print(rb %>% filter(tipo_registro == "Sin subtipo (feb-2023)") %>% count(anio, mes))
 resumen_tipo <- rb %>% filter(servicio == SERVICIO_FOCO) %>%
   count(tipo_registro, name = "registros", sort = TRUE) %>%
   mutate(pct = round(100 * registros / sum(registros), 1))
@@ -63,29 +69,47 @@ sc <- rb %>% filter(servicio == SERVICIO_FOCO)
 parroquias <- rb %>% distinct(cod_parroquia, parroquia_corta, zona_foco) %>% arrange(cod_parroquia)
 fechas <- seq(min(rb$fecha), max(rb$fecha), by = "day")
 
+cat_viol <- c("Violencia intrafamiliar / de género", "Delitos contra las personas")
+ref <- sc %>% filter(tipo_registro != "Sin subtipo (feb-2023)",
+                     fecha >= as.Date("2022-12-01"), fecha < as.Date("2023-05-01"))
+prop_de <- function(d) d %>% summarise(p_inc = mean(delictivo), p_del = mean(tipo_registro == "Delito"),
+                                       p_con = mean(tipo_registro == "Convivencia y orden público"),
+                                       p_rob = mean(categoria == "Delitos contra la propiedad"),
+                                       p_vio = mean(categoria %in% cat_viol))
+proporciones <- ref %>% group_by(cod_parroquia) %>% prop_de()
+global <- prop_de(ref)
+proporciones <- tibble(cod_parroquia = parroquias$cod_parroquia) %>%
+  left_join(proporciones, by = "cod_parroquia") %>%
+  mutate(across(starts_with("p_"), ~ coalesce(.x, global[[cur_column()]])))
+print(proporciones)
+
 conteo_fecha <- sc %>%
+  left_join(proporciones, by = "cod_parroquia") %>%
+  mutate(sin = tipo_registro == "Sin subtipo (feb-2023)") %>%
   group_by(cod_parroquia, fecha) %>%
-  summarise(incidentes  = sum(delictivo),                       # OBJETIVO
-            delitos     = sum(tipo_registro == "Delito"),
-            convivencia = sum(tipo_registro == "Convivencia y orden público"),
-            robos       = sum(categoria == "Delitos contra la propiedad"),
-            violencia   = sum(categoria %in% c("Violencia intrafamiliar / de género",
-                                               "Delitos contra las personas")),
+  summarise(incidentes  = sum(delictivo) + sum(sin * p_inc),     # OBJETIVO
+            delitos     = sum(tipo_registro == "Delito") + sum(sin * p_del),
+            convivencia = sum(tipo_registro == "Convivencia y orden público") + sum(sin * p_con),
+            robos       = sum(categoria == "Delitos contra la propiedad") + sum(sin * p_rob),
+            violencia   = sum(categoria %in% cat_viol) + sum(sin * p_vio),
             seguridad_ciudadana = n(),                          # objetivo anterior
             .groups = "drop") %>%
   right_join(expand_grid(cod_parroquia = parroquias$cod_parroquia, fecha = fechas),
              by = c("cod_parroquia", "fecha")) %>%
   mutate(across(c(incidentes, delitos, convivencia, robos, violencia, seguridad_ciudadana),
-                ~ replace_na(.x, 0L))) %>%
+                ~ replace_na(as.numeric(.x), 0))) %>%
   left_join(parroquias, by = "cod_parroquia") %>%
   arrange(cod_parroquia, fecha)
-stopifnot(sum(conteo_fecha$incidentes) == sum(sc$delictivo),
+esperado <- sum(sc$delictivo) + sum((sc %>% filter(tipo_registro == "Sin subtipo (feb-2023)") %>%
+                                        left_join(proporciones, by = "cod_parroquia"))$p_inc)
+stopifnot(abs(sum(conteo_fecha$incidentes) - esperado) < 1e-6,
           sum(conteo_fecha$seguridad_ciudadana) == nrow(sc))
 
 conteo_semana <- conteo_fecha %>%
   mutate(semana_inicio = floor_date(fecha, "week", week_start = 1)) %>%
   group_by(cod_parroquia, parroquia_corta, zona_foco, semana_inicio) %>%
-  summarise(across(c(incidentes, delitos, convivencia, robos, violencia, seguridad_ciudadana), sum),
+  summarise(across(c(incidentes, delitos, convivencia, robos, violencia), ~ as.integer(round(sum(.x)))),
+            seguridad_ciudadana = sum(seguridad_ciudadana),
             dias_observados = n(), .groups = "drop") %>%
   mutate(semana_completa = dias_observados == 7) %>%
   agregar_calendario() %>%
@@ -109,7 +133,7 @@ definiciones <- tibble::tribble(
   ~variable, ~definicion,
   "tipo_registro", "Delito / Convivencia y orden público / Servicio policial solicitado / Trámite u operativo / Personas desaparecidas o muertes (solo Seguridad Ciudadana)",
   "delictivo", "TRUE si tipo_registro es Delito o Convivencia y orden público",
-  "incidentes", "OBJETIVO: incidentes delictivos (delitos + convivencia) de la parroquia en el día o la semana",
+  "incidentes", "OBJETIVO: incidentes delictivos (delitos + convivencia) de la parroquia en el día o la semana; en feb-2023 se estima con la proporción de los meses vecinos (subtipo genérico)",
   "delitos", "Solo delitos (propiedad, personas, violencia intrafamiliar, drogas)",
   "convivencia", "Libadores, escándalos, fiestas, riñas, ruido",
   "seguridad_ciudadana", "Todos los registros de Seguridad Ciudadana (objetivo usado hasta el día 13, se guarda para comparar)"
