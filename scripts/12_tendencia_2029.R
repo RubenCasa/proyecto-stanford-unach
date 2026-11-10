@@ -1,6 +1,6 @@
 # =============================================================================
 # PROYECTO STANFORD · 12_tendencia_2029.R
-# Tendencia mensual de Seguridad Ciudadana por parroquia hasta DICIEMBRE 2029
+# Tendencia mensual de incidentes delictivos (delitos + convivencia) por parroquia hasta DICIEMBRE 2029
 # (horizonte del proyecto "... seguridad ciudadana 2026–2029")
 #
 #   [RUBÉN]  Prueba retrospectiva (backtest), elección del método por zona y
@@ -160,7 +160,7 @@ graf_tendencia <- function(cods, nombre, titulo_g, alto = 7) {
     labs(title = titulo_g,
          subtitle = paste0("Gris: real · Rojo: tendencia esperada · Bandas: rango 80 % y 95 %\n",
                            "Urbana: ", elegido_urbana, " · Rurales: ", elegido_rural),
-         x = NULL, y = "Incidentes de Seguridad Ciudadana por mes") + tema_stanford
+         x = NULL, y = "Incidentes delictivos por mes") + tema_stanford
   guardar_grafico(g, nombre, ancho = 11, alto = alto)
 }
 graf_tendencia(c("060150", names(PARROQUIAS_FOCO)), "12_2_tendencia_2029_foco.png",
@@ -180,7 +180,7 @@ if (file.exists(ruta_capa)) {
     geom_sf_text(aes(label = paste0(parroquia_corta, "\n", cambio_2025_2029_pct, " %")), size = 2.4) +
     scale_fill_gradient2(low = "#2b7bba", mid = "white", high = "#d4593a", midpoint = 0,
                          name = "Cambio\n2025-2029") +
-    labs(title = "Cambio esperado en incidentes de Seguridad Ciudadana, 2025 a 2029",
+    labs(title = "Cambio esperado en incidentes delictivos, 2025 a 2029",
          subtitle = "Azul: baja · Rojo: sube (tendencia, no certeza)") + theme_void()
   guardar_grafico(g, "12_4_mapa_cambio_2029.png", ancho = 8, alto = 8)
 }

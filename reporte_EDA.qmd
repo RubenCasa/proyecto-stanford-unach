@@ -66,6 +66,19 @@ img("05_4_flores_cubijies_subtipos.png")
 img("06_5_flores_cubijies_anio.png")
 ```
 
+# Qué parte de Seguridad Ciudadana son patrones delictivos (días 14-15)
+
+Seguridad Ciudadana mezcla hechos (delitos y convivencia) con pedidos de servicio (patrullaje solicitado, alarmas) y trámites (fichas de datos, boletas, resguardo de valores). Desde el día 14 los modelos predicen solo **incidentes delictivos** (delitos + convivencia). Ver `scripts/07b_objetivo_delictivo.R`.
+
+```{r}
+if (file.exists("03_resultados/tablas/07b_objetivo_delictivo.xlsx")) {
+  kable(tab("07b_objetivo_delictivo.xlsx", "Tipo de registro"))
+  img("07b_1_tipo_registro_anual.png")
+  img("07b_2_delitos_por_anio.png")
+  kable(tab("07b_objetivo_delictivo.xlsx", "Antes vs ahora"))
+}
+```
+
 # Variables para los modelos (Feature Store)
 
 ```{r}

@@ -3,8 +3,9 @@
 # DÍAS 14-18 (9 al 13-nov) · Entrenamiento y validación de modelos predictivos
 # (+ DÍA 19: predicciones para el dashboard)
 #
-# Problema: predecir el número de incidentes de Seguridad Ciudadana de la
-# próxima semana en cada parroquia de Riobamba. Métricas: MAE y RMSE.
+# Problema: predecir el número de incidentes DELICTIVOS (delitos + convivencia,
+# definidos el día 14 en 07b_objetivo_delictivo.R) de la próxima semana en cada
+# parroquia de Riobamba. Métricas: MAE y RMSE.
 # Validación por fecha: el ÚLTIMO AÑO (52 semanas) es prueba; nunca al azar.
 #
 # DÍA 14 [SONIA] distribución del objetivo · [RUBÉN] partición + modelo base y

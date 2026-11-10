@@ -20,6 +20,7 @@ EJECUTAR (en orden, o todo junto con ejecutar_todo.R: 20-40 min)
  05_eda_frecuencias.R ..... día 9      Nelcy, Sonia
  06_eda_temporal.R ........ día 10     Nelcy, Sonia
  07_conteos_variables.R ... días 8-10  Rubén
+ 07b_objetivo_delictivo.R . días 14-15 Sonia, Melanie, Rubén, Nelcy (qué se predice)
  08_mapas.R ............... días 4-11  Edgar (internet la primera vez)
  09_features.R ............ días 11-13 Rubén, Nelcy, Melanie, Edgar, Sonia
  reporte_EDA.qmd .......... días 11-13 Sonia (abrir y pulsar "Render")
