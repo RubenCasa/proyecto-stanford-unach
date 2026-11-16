@@ -35,6 +35,42 @@ rb <- rb %>%
          tipo_registro = if_else(servicio == SERVICIO_FOCO & subtipo == servicio,
                                  "Sin subtipo (feb-2023)", tipo_registro(categoria, subtipo)),
          delictivo = tipo_registro %in% c("Delito", "Convivencia y orden público"))
+
+# -----------------------------------------------------------------------------
+# [SONIA] 16-nov · Catálogo de delitos según el COIP (clasificación 1-2-3)
+# -----------------------------------------------------------------------------
+# Sonia clasificó cada subtipo de Chimborazo con el COIP:
+#   1 = delito nombrado expresamente en el COIP (presunto, no comprobado)
+#   2 = posible delito: se confirma con datos de Fiscalía
+#   3 = subtipo ambiguo: se aclara con el ECU 911 / Policía
+#   0 = no es delito (patrullajes, libadores, trámites...)
+# Desde hoy la variable objetivo son SOLO los registros con código 1.
+titulo("[SONIA] 16-nov · Catálogo COIP: código de cada subtipo")
+ARCHIVO_CATALOGO <- file.path(DIR_DOCS, "Catalogo_delitos_clasificado_1_2_3.xlsx")
+if (!file.exists(ARCHIVO_CATALOGO)) stop("Falta ", ARCHIVO_CATALOGO)
+clave_subtipo <- function(x) stringi::stri_trans_general(str_to_lower(str_squish(x)), "Latin-ASCII")
+catalogo <- read_excel(ARCHIVO_CATALOGO, sheet = "Matriz 1-2-3") %>%
+  select(codigo_coip = 1, servicio = 2, subtipo = 3, articulo_coip = 6) %>%
+  filter(servicio == SERVICIO_FOCO, !is.na(subtipo)) %>%
+  mutate(clave = clave_subtipo(subtipo), codigo_coip = as.integer(codigo_coip)) %>%
+  group_by(clave) %>% summarise(codigo_coip = min(codigo_coip),
+                                articulo_coip = first(na.omit(as.character(articulo_coip))), .groups = "drop")
+rb <- rb %>% select(-any_of(c("codigo_coip", "articulo_coip", "clave"))) %>%
+  mutate(clave = clave_subtipo(subtipo)) %>%
+  left_join(catalogo, by = "clave") %>%
+  mutate(codigo_coip = if_else(servicio == SERVICIO_FOCO, coalesce(codigo_coip, 0L), NA_integer_),
+         delictivo = servicio == SERVICIO_FOCO & codigo_coip == 1L) %>%
+  select(-clave)
+stopifnot(nrow(rb) == n_registros)
+resumen_coip <- rb %>% filter(servicio == SERVICIO_FOCO) %>%
+  count(codigo_coip, name = "registros") %>%
+  mutate(significado = c("0" = "No es delito", "1" = "Delito explícito (COIP)",
+                         "2" = "Posible delito (Fiscalía)", "3" = "Ambiguo (ECU 911 / Policía)")[as.character(codigo_coip)],
+         pct = round(100 * registros / sum(registros), 1))
+print(resumen_coip)
+print(rb %>% filter(servicio == SERVICIO_FOCO) %>% count(tipo_registro, codigo_coip) %>%
+        pivot_wider(names_from = codigo_coip, values_from = n, values_fill = 0, names_prefix = "cod_"))
+
 # En feb-2023 el ECU 911 publicó todo Seguridad Ciudadana con subtipo genérico
 # ("Seguridad Ciudadana"): no se sabe cuáles fueron delitos. Esos registros se
 # reparten con la proporción de cada parroquia en los meses vecinos (dic-2022 a
@@ -45,7 +81,7 @@ resumen_tipo <- rb %>% filter(servicio == SERVICIO_FOCO) %>%
   mutate(pct = round(100 * registros / sum(registros), 1))
 print(resumen_tipo)
 subtipos_tipo <- rb %>% filter(servicio == SERVICIO_FOCO) %>%
-  count(tipo_registro, categoria, subtipo, name = "registros") %>%
+  count(tipo_registro, categoria, subtipo, codigo_coip, name = "registros") %>%
   arrange(tipo_registro, desc(registros))
 message("Solo el ", resumen_tipo$pct[resumen_tipo$tipo_registro == "Delito"],
         " % de Seguridad Ciudadana son delitos; los pedidos de patrullaje y los trámites ",
@@ -132,9 +168,10 @@ titulo("[MELANIE] Día 14 · Definiciones")
 definiciones <- tibble::tribble(
   ~variable, ~definicion,
   "tipo_registro", "Delito / Convivencia y orden público / Servicio policial solicitado / Trámite u operativo / Personas desaparecidas o muertes (solo Seguridad Ciudadana)",
-  "delictivo", "TRUE si tipo_registro es Delito o Convivencia y orden público",
-  "incidentes", "OBJETIVO: incidentes delictivos (delitos + convivencia) de la parroquia en el día o la semana; en feb-2023 se estima con la proporción de los meses vecinos (subtipo genérico)",
-  "delitos", "Solo delitos (propiedad, personas, violencia intrafamiliar, drogas)",
+  "codigo_coip", "Catálogo de Sonia Calle según el COIP: 1 = delito explícito, 2 = posible delito (Fiscalía), 3 = ambiguo (ECU 911 / Policía), 0 = no es delito",
+  "delictivo", "TRUE si codigo_coip es 1 (delito nombrado en el COIP; presunto, no comprobado)",
+  "incidentes", "OBJETIVO: delitos explícitos del COIP (código 1) de la parroquia en el día o la semana; en feb-2023 se estima con la proporción de los meses vecinos (subtipo genérico)",
+  "delitos", "Clasificación anterior por palabras clave (propiedad, personas, violencia intrafamiliar, drogas); se guarda para comparar",
   "convivencia", "Libadores, escándalos, fiestas, riñas, ruido",
   "seguridad_ciudadana", "Todos los registros de Seguridad Ciudadana (objetivo usado hasta el día 13, se guarda para comparar)"
 )
@@ -175,10 +212,11 @@ saveRDS(rb, file.path(DIR_LIMPIOS, "riobamba_depurada.rds"))
 write_csv(rb, file.path(DIR_LIMPIOS, "riobamba_depurada.csv"))
 saveRDS(conteo_fecha,  file.path(DIR_LIMPIOS, "conteo_parroquia_fecha.rds"))
 saveRDS(conteo_semana, file.path(DIR_LIMPIOS, "conteo_parroquia_semana.rds"))
-guardar_tabla(list("Tipo de registro" = resumen_tipo,
+guardar_tabla(list("Codigo COIP" = resumen_coip,
+                   "Tipo de registro" = resumen_tipo,
                    "Subtipos por tipo" = subtipos_tipo,
                    "Antes vs ahora" = comparacion,
                    "Definiciones" = definiciones,
                    "Por año" = por_anio),
               "07b_objetivo_delictivo.xlsx")
-message("Listo -> el objetivo de los modelos ahora es 'incidentes delictivos'. Sigue 08 y 09.")
+message("Listo -> el objetivo de los modelos ahora son los delitos explícitos del COIP (código 1). Sigue 08 y 09.")

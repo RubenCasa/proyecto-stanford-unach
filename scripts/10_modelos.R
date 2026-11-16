@@ -3,7 +3,7 @@
 # DÍAS 14-18 (9 al 13-nov) · Entrenamiento y validación de modelos predictivos
 # (+ DÍA 19: predicciones para el dashboard)
 #
-# Problema: predecir el número de incidentes DELICTIVOS (delitos + convivencia,
+# Problema: predecir el número de incidentes DELICTIVOS (delitos explícitos del COIP, código 1 del catálogo,
 # definidos el día 14 en 07b_objetivo_delictivo.R) de la próxima semana en cada
 # parroquia de Riobamba. Métricas: MAE y RMSE.
 # Validación por fecha: el ÚLTIMO AÑO (52 semanas) es prueba; nunca al azar.

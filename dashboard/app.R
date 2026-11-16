@@ -1,7 +1,7 @@
 # =============================================================================
 # PROYECTO STANFORD · dashboard/app.R  (versión 2)
 # Dashboard predictivo de patrones delictivos · Riobamba (Flores y Cubijíes)
-# Los pronósticos son de "incidentes delictivos" = delitos + convivencia (día 14)
+# Los pronósticos son de "incidentes delictivos" = delitos explícitos del COIP, código 1 del catálogo de Sonia Calle (16-nov)
 # Responsable: ANTHONY JOEL CATAGUA CHULCA (Equipo 2) · mapas: EDGAR CHAMBA
 #
 # Pestañas:
@@ -71,7 +71,7 @@ grafico <- function(g, alto = NULL, leyenda = TRUE) {
 TITULO_PROYECTO <- paste("Análisis predictivo de patrones delictivos mediante técnicas de Ciencia de",
                          "Datos e Inteligencia Artificial para el fortalecimiento de la seguridad ciudadana 2026–2029")
 # Categorías consideradas "patrones delictivos" (= objetivo de los modelos desde el día 14,
-# ver scripts/07b_objetivo_delictivo.R): delitos + convivencia; sin patrullaje ni trámites
+# ver scripts/07b_objetivo_delictivo.R): solo delitos explícitos del COIP (codigo_coip == 1)
 CAT_DELICTIVAS <- c("Delitos contra la propiedad", "Delitos contra las personas",
                     "Violencia intrafamiliar / de género", "Drogas", "Convivencia y orden público")
 EQUIPO <- tibble::tribble(
@@ -112,7 +112,7 @@ ui <- page_sidebar(
                 selected = "Seguridad Ciudadana", multiple = TRUE),
     input_switch("solo_delictivo", "Solo patrones delictivos", value = TRUE),
     div(class = "small text-muted mb-2 mt-n2",
-        "Delitos + convivencia (lo que predicen los modelos). Excluye pedidos de patrullaje, trámites y personas desaparecidas."),
+        "Solo delitos explícitos del COIP (código 1 del catálogo; lo que predicen los modelos). Excluye convivencia, patrullaje, trámites y casos dudosos."),
     selectizeInput("categoria", "Categoría (vacío = todas)", choices = categorias,
                    multiple = TRUE, options = list(placeholder = "Todas las categorías")),
     selectizeInput("subtipo", "Subtipo (vacío = todos)", choices = NULL, multiple = TRUE,
@@ -296,7 +296,7 @@ server <- function(input, output, session) {
   # Filtro común (sin fechas) para reutilizar en el año anterior y en el mapa
   base_filtro <- reactive({
     d <- datos %>% filter(servicio %in% input$servicio)
-    if (isTRUE(input$solo_delictivo)) d <- d %>% filter(categoria %in% CAT_DELICTIVAS)
+    if (isTRUE(input$solo_delictivo)) d <- d %>% filter(delictivo %in% TRUE)
     if (length(input$categoria)) d <- d %>% filter(categoria %in% input$categoria)
     if (length(input$subtipo)) d <- d %>% filter(subtipo %in% input$subtipo)
     d
@@ -395,7 +395,7 @@ server <- function(input, output, session) {
 
   # ---- Mapa de calor parroquia × año (categorías delictivas) ----
   output$g_calor_parroquia <- renderPlotly({
-    d <- datos %>% filter(servicio %in% input$servicio, categoria %in% CAT_DELICTIVAS) %>%
+    d <- datos %>% filter(servicio %in% input$servicio, delictivo %in% TRUE) %>%
       count(parroquia_corta, anio, categoria) %>%
       group_by(parroquia_corta, anio) %>% mutate(pct = 100 * n / sum(n)) %>% ungroup() %>%
       group_by(parroquia_corta, categoria) %>% summarise(n = sum(n), pct = mean(pct), .groups = "drop")

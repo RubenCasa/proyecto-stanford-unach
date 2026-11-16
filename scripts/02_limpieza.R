@@ -24,6 +24,9 @@ message("A nivel nacional: ", miles(sum(resumen_nacional$sin_servicio)), " regis
 # -----------------------------------------------------------------------------
 # [NELCY] Nombres de columnas estandarizados y valores perdidos
 # -----------------------------------------------------------------------------
+
+
+
 titulo("[NELCY] Día 6 · Valores perdidos")
 base <- base %>% clean_names()     # fecha, provincia, canton, cod_parroquia, ...
 print(names(base))
@@ -80,6 +83,7 @@ message("Servicios distintos: ", n_distinct(base$servicio),
         " · Subtipos distintos: ", n_distinct(base$subtipo))
 
 # -----------------------------------------------------------------------------
+
 # [MELANIE] Valores no válidos en Cod_Parroquia y Parroquia
 # -----------------------------------------------------------------------------
 titulo("[MELANIE] Día 6 · Códigos y nombres de parroquia")

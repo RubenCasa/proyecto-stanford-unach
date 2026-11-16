@@ -1,6 +1,6 @@
 # =============================================================================
 # PROYECTO STANFORD · 12_tendencia_2029.R
-# Tendencia mensual de incidentes delictivos (delitos + convivencia) por parroquia hasta DICIEMBRE 2029
+# Tendencia mensual de delitos explícitos del COIP (código 1) por parroquia hasta DICIEMBRE 2029
 # (horizonte del proyecto "... seguridad ciudadana 2026–2029")
 #
 #   [RUBÉN]  Prueba retrospectiva (backtest), elección del método por zona y
