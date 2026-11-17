@@ -79,7 +79,7 @@ function Semanas({ semanas, sem, setSem, compacto }) {
     <div className={`semanas ${compacto ? 'compacto' : ''}`}>
       {semanas.map(w => (
         <button key={w.h} className={sem === w.h ? 'on' : ''} onClick={() => setSem(w.h)} style={sem === w.h ? { borderColor: w.cara.c } : null}>
-          <span className="sn">Semana {w.h}{w.h === 1 ? ' · la primera' : ''}</span>
+          <span className="sn">{w.etiqueta}</span>
           <b className="sf">{w.corto}</b>
           <span className="sc">{w.cara.e}</span>
           <span className="st" style={{ color: w.cara.c }}>{w.cara.t}</span>
@@ -109,7 +109,9 @@ export default function Dashboard({ datos: D, pronInicial }) {
   const [fuente, setFuente] = useState('…');
   const [paleta, setPaleta] = useState(false);
   const [tour, setTour] = useState(true);
-  const [sem, setSem] = useState(1);            // semana elegida (1 a 4 después del último dato)
+  const [sem, setSem] = useState(1);            // semana elegida (horizonte 1..12 después del último dato)
+  const [hoy, setHoy] = useState(null);        // fecha de hoy (solo en el navegador)
+  const elegida = useRef(false);
 
   /* datos que vienen de la API */
   useEffect(() => { api('mapa', {}, D).then(r => { setMat(r.data); setFuente(r.fuente); }); }, [D]);
@@ -123,12 +125,25 @@ export default function Dashboard({ datos: D, pronInicial }) {
     window.addEventListener('keydown', f); return () => window.removeEventListener('keydown', f);
   }, []);
 
-  const semanas = useMemo(() => [1, 2, 3, 4].map(h => {
-    const filas = pron.filter(p => p.horizonte === h);
-    return { h, ...semana(filas[0].semana_inicio), cara: carita(filas), total: filas.reduce((s, p) => s + p.prediccion, 0) };
-  }), [pron]);
-  const sw = semanas[sem - 1];
-  const p1 = useMemo(() => pron.filter(p => p.horizonte === sem), [pron, sem]);
+  useEffect(() => { setHoy(new Date()); }, []);
+  /* semanas que ya pasaron no se muestran; la que contiene hoy se llama «Esta semana» */
+  const semanas = useMemo(() => {
+    const hs = [...new Set(pron.map(p => p.horizonte))].sort((a, b) => a - b);
+    const todas = hs.map(h => {
+      const filas = pron.filter(p => p.horizonte === h);
+      return { h, ...semana(filas[0].semana_inicio), cara: carita(filas), total: filas.reduce((s, p) => s + p.prediccion, 0) };
+    });
+    if (!hoy) return todas.slice(0, 5).map((w, i) => ({ ...w, etiqueta: `Semana ${w.h}` }));
+    const t = hoy.getTime();
+    const vivas = todas.filter(w => w.fin.getTime() + 86400000 > t);
+    const lista = (vivas.length ? vivas : todas.slice(-1)).slice(0, 5);
+    return lista.map((w, i) => ({ ...w, actual: w.ini.getTime() <= t && w.fin.getTime() + 86400000 > t, etiqueta: w.ini.getTime() <= t && w.fin.getTime() + 86400000 > t ? 'Esta semana' : i === 1 ? 'La próxima' : `En ${i} semanas` }));
+  }, [pron, hoy]);
+  useEffect(() => { if (!elegida.current && semanas.length) setSem(semanas[0].h); }, [semanas]);
+  useEffect(() => { if (semanas.length && !semanas.some(w => w.h === sem)) setSem(semanas[0].h); }, [semanas, sem]);
+  const sw = semanas.find(w => w.h === sem) || semanas[0];
+  const elegir = h => { elegida.current = true; setSem(h); };
+  const p1 = useMemo(() => pron.filter(p => p.horizonte === sw.h), [pron, sw]);
   const total = useMemo(() => YRS.map(y => D.cambio.reduce((s, r) => s + (r[y] || 0), 0)), [D]);
   const altas = p1.filter(p => p.alerta === 'Alta');
   const rio = p1.find(p => p.parroquia_corta === 'RIOBAMBA'), cub = p1.find(p => p.parroquia_corta === 'CUBIJIES'), flo = p1.find(p => p.parroquia_corta === 'FLORES');
@@ -173,8 +188,8 @@ export default function Dashboard({ datos: D, pronInicial }) {
             </div>
 
             <h2 className="h2">📅 ¿Qué semana quieres ver?</h2>
-            <p className="n" style={{ margin: '-6px 0 12px' }}>Los datos llegan hasta el domingo 27 de septiembre de 2026. Estas son las 4 semanas siguientes. Toca una y todo el tablero cambia a esa semana.</p>
-            <Semanas semanas={semanas} sem={sem} setSem={setSem} />
+            <p className="n" style={{ margin: '-6px 0 12px' }}>Los datos del ECU 911 llegan hasta el domingo 27 de septiembre de 2026; desde ahí el modelo calcula hacia adelante, así que cuanto más lejana es la semana, más incierto es el pronóstico. Toca una semana y todo el tablero cambia.</p>
+            <Semanas semanas={semanas} sem={sem} setSem={elegir} />
             <div className="caritas"><span>🙂 Todo tranquilo</span><span>😐 Atención</span><span>😟 Alerta</span></div>
 
             <h2 className="h2">★ Las parroquias foco del proyecto</h2>
@@ -213,9 +228,9 @@ export default function Dashboard({ datos: D, pronInicial }) {
             </div>
           </section>)}
 
-        {sec === 'mapa' && (mat ? <MapaVivo datos={D} pron1={p1} semanas={semanas} sem={sem} setSem={setSem} mat={mat} sel={par} onSel={setPar} onTendencia={n => { setPar(n); ir('tend'); }} dark={oscuro} /> : <div className="card">Cargando mapa…</div>)}
+        {sec === 'mapa' && (mat ? <MapaVivo datos={D} pron1={p1} semanas={semanas} sem={sem} setSem={elegir} mat={mat} sel={par} onSel={setPar} onTendencia={n => { setPar(n); ir('tend'); }} dark={oscuro} /> : <div className="card">Cargando mapa…</div>)}
 
-        {sec === 'pron' && <Pronostico D={D} pron={pron} p1={p1} semanas={semanas} sem={sem} setSem={setSem} umbral={umbral} setUmbral={setUmbral} onParroquia={verParroquia} />}
+        {sec === 'pron' && <Pronostico D={D} pron={pron} p1={p1} semanas={semanas} sem={sem} setSem={elegir} umbral={umbral} setUmbral={setUmbral} onParroquia={verParroquia} />}
         {sec === 'tend' && <Tendencia D={D} par={par} setPar={setPar} />}
         {sec === 'modelos' && <Modelos D={D} />}
         {sec === 'abig' && <Abigeato D={D} />}
@@ -255,7 +270,7 @@ function Pronostico({ D, pron, p1, semanas, sem, setSem, umbral, setUmbral, onPa
       <Guia e="🚦"><b>Qué estás viendo:</b> cuántos delitos se esperan en cada parroquia en la semana que elijas. <b>Rojo</b> 😟 = se espera bastante más de lo habitual, <b>amarillo</b> 😐 = atención, <b>verde</b> 🙂 = tranquilo. Toca una tarjeta para verla en el mapa.</Guia>
       <h2 className="h2" style={{ marginTop: 0 }}>📅 Elige la semana</h2>
       <Semanas semanas={semanas} sem={sem} setSem={setSem} />
-      <h2 className="h2">Parroquia por parroquia · semana {semanas[sem - 1].corto}</h2>
+      <h2 className="h2">Parroquia por parroquia · semana {(semanas.find(w => w.h === sem) || semanas[0]).corto}</h2>
       <div className="card" style={{ marginBottom: 16 }}>
         <div className="row" style={{ margin: 0, justifyContent: 'space-between' }}>
           <div style={{ flex: 1, minWidth: 260 }}><h3>¿Qué tan sensible quieres la alerta?<Info t="Índice = pronóstico / promedio de las últimas 52 semanas × 100. Alerta Alta si el índice supera 100 + el porcentaje elegido." /></h3>
@@ -278,7 +293,7 @@ function Pronostico({ D, pron, p1, semanas, sem, setSem, umbral, setUmbral, onPa
       </div>
       <div className="card" style={{ marginTop: 16 }}>
         <h3>Detalle de la semana elegida</h3>
-        <div className="row"><select value={h} onChange={e => setH(+e.target.value)}>{semanas.map(w => <option key={w.h} value={w.h}>Semana {w.h}: {w.corto} {w.anio}</option>)}</select>
+        <div className="row"><select value={h} onChange={e => setH(+e.target.value)}>{semanas.map(w => <option key={w.h} value={w.h}>{w.etiqueta}: {w.corto} {w.anio}</option>)}</select>
           <input type="search" value={q} onChange={e => setQ(e.target.value)} placeholder="Buscar parroquia…" /><button className="btn sec" onClick={csv}>Descargar CSV</button></div>
         <Tabla onRow={r => onParroquia(r.parroquia_corta)} rows={filas} cols={[
           { t: 'Parroquia', o: o('parroquia_corta'), f: r => nom(r.parroquia_corta) + (r.zona_foco ? ' ★' : '') }, { t: 'Predicción', r: 1, o: o('prediccion'), f: r => fmt(r.prediccion, 1) },

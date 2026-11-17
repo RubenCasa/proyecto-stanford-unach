@@ -18,7 +18,7 @@
 #        pliegues · [SONIA] desempeño por pliegue
 # DÍA 18 [RUBÉN] tabla de métricas y modelo elegido · [NELCY] reales vs
 #        predicción · [SONIA] gráficos · [MELANIE] variables del modelo elegido
-# DÍA 19 [RUBÉN] pronóstico de las próximas 4 semanas (modelo urbano + modelo rural)
+# DÍA 19 [RUBÉN] pronóstico de las próximas 12 semanas (modelo urbano + modelo rural)
 #
 # Entrada: 02_datos_limpios/feature_store.rds y conteo_parroquia_semana.rds
 # Salida:  03_resultados/modelos/  (métricas, predicciones, modelo final)
@@ -380,9 +380,9 @@ importancia <- bind_rows(
 print(importancia %>% group_by(zona, componente) %>% slice_head(n = 6), n = 40)
 
 # =============================================================================
-# DÍA 19 · Pronóstico de las próximas 4 semanas (para el dashboard)
+# DÍA 19 · Pronóstico de las próximas 12 semanas (para el dashboard)
 # =============================================================================
-titulo("[RUBÉN] Día 19 · Pronóstico de las próximas 4 semanas")
+titulo("[RUBÉN] Día 19 · Pronóstico de las próximas 12 semanas")
 # Cada modelo elegido se re-entrena con TODOS los datos y pronostica en forma
 # recursiva (la predicción de la semana 1 se usa como rezago de la semana 2...).
 todo <- fs
@@ -415,7 +415,7 @@ historia <- readRDS(file.path(DIR_LIMPIOS, "conteo_parroquia_semana.rds")) %>%
   select(cod_parroquia, parroquia_corta, zona_foco, semana_inicio, incidentes, robos, violencia)
 extra <- fs %>% select(cod_parroquia, any_of(c("urbana", espaciales))) %>% distinct()
 pronosticos <- list()
-for (h in 1:4) {
+for (h in 1:12) {
   nueva <- max(historia$semana_inicio) + 7
   recientes <- historia %>% group_by(cod_parroquia) %>% slice_tail(n = 4) %>%
     summarise(robos = as.integer(round(mean(robos))),
@@ -454,7 +454,7 @@ pronosticos <- bind_rows(pronosticos) %>% left_join(media52, by = "cod_parroquia
          across(c(prediccion, rango_bajo, rango_alto, media_52_semanas), ~ round(.x, 1))) %>%
   select(-urbana)
 print(pronosticos %>% select(parroquia_corta, semana_inicio, horizonte, prediccion,
-                             rango_bajo, rango_alto, prob_al_menos_1, indice, alerta), n = 48)
+                             rango_bajo, rango_alto, prob_al_menos_1, indice, alerta), n = 144)
 
 # ---- Guardar -----------------------------------------------------------------
 pred_test_out <- pred_test %>% left_join(nombres_parroquia, by = "cod_parroquia")

@@ -146,7 +146,7 @@ button:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible{ou
 .top3 button:hover{background:rgba(255,255,255,.16)}.top3 i{width:12px;height:12px;border-radius:4px}.top3 span{flex:1;font-weight:600}.top3 b{font-weight:500;color:#cfe0ee;font-size:13px}
 .story .top3 b{border-bottom:0}
 
-.semanas{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.semanas{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px}
 .semanas button{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;background:var(--card);border:2px solid var(--line);border-radius:18px;padding:16px 12px;font:inherit;color:var(--ink);cursor:pointer;transition:.18s}
 .semanas button:hover{transform:translateY(-3px);box-shadow:0 12px 28px rgba(16,38,59,.12)}
 .semanas button.on{box-shadow:0 10px 30px rgba(31,111,178,.2);background:linear-gradient(180deg,rgba(31,111,178,.07),transparent)}

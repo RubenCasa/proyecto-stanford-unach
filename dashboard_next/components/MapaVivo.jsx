@@ -165,7 +165,7 @@ export default function MapaVivo({ datos: D, pron1, semanas, sem, setSem, mat, s
           <div className="row" style={{ justifyContent: 'space-between', margin: 0 }}><h3 style={{ fontSize: 18, margin: 0 }}>{nom(sel)}{g.foco ? ' ★' : ''}</h3><button className="btn sec" style={{ padding: '4px 10px' }} onClick={() => onSel(null)} aria-label="Cerrar">✕</button></div>
           <p className="n" style={{ margin: '2px 0 10px' }}>{fmt(g.area, 1)} km² · {g.foco ? 'Parroquia foco del proyecto' : 'Parroquia'}</p>
           <div className="veredicto" style={{ borderColor: rc }}>
-            <div className="mini">SEMANA {semanas[sem - 1].corto.toUpperCase()}</div>
+            <div className="mini">SEMANA {(semanas.find(w => w.h === sem) || semanas[0]).corto.toUpperCase()}</div>
             <div style={{ fontSize: 17, fontWeight: 700 }}>En esa semana es {rt} que ocurra un delito</div>
             <div className="n" style={{ margin: '2px 0 0' }}>Probabilidad de al menos uno: <b>{p.prob_al_menos_1} %</b> · Predicción {fmt(p.prediccion, 1)} (rango {fmt(p.rango_bajo, 1)}–{fmt(p.rango_alto, 1)})</div>
             <div style={{ marginTop: 6 }}><span className={`badge b-${p.alerta}`}>Alerta {p.alerta.toLowerCase()}</span></div>
