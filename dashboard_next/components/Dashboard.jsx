@@ -166,7 +166,7 @@ export default function Dashboard({ datos: D, pronInicial }) {
           <div className="row" style={{ margin: 0 }}>
             <button className="btn sec" onClick={() => setTour(true)}>❓ Guía</button>
             <button className="btn sec" onClick={() => setOscuro(!oscuro)}>{oscuro ? '☀️ Claro' : '🌙 Oscuro'}</button>
-            <div className="chip" suppressHydrationWarning>{esc !== 'base' && <b style={{ color: 'var(--rojo)' }}>Escenario {esc === 'A' ? 'A' : 'A+B'} · </b>}{fuente === 'API' ? '🟢 API en vivo' : '⚪ Datos locales'} · {new Date(D.generado + 'T12:00').toLocaleDateString('es-EC', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
+            <div className="chip" suppressHydrationWarning>{esc !== 'base' && <b style={{ color: 'var(--rojo)' }}>Escenario {ESC_INFO.find(x => x.k === esc)?.t} · </b>}{fuente === 'API' ? '🟢 API en vivo' : '⚪ Datos locales'} · {new Date(D.generado + 'T12:00').toLocaleDateString('es-EC', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
           </div>
         </header>
 
@@ -422,6 +422,7 @@ const ESC_INFO = [
   { k: 'base', fila: 'Base (Sonia)', t: 'Base de Sonia', e: '📘', d: 'Solo lo que el catálogo COIP de Sonia Calle marca como delito explícito (código 1). Es el resultado oficial del proyecto.' },
   { k: 'A', fila: 'A', t: 'Ampliado A', e: '📗', d: 'Suma 15 tipos que el COIP nombra expresamente (violencia física familiar, drogas, armas de fuego, abandono, delitos sexuales…). Confianza alta.' },
   { k: 'AB', fila: 'A+B', t: 'Ampliado A+B', e: '📙', d: 'Suma además 15 tipos probables (agresiones, personas heridas, daños, fraude). Confianza media o baja: depende de lo que realmente pasó.' },
+  { k: 'ED', fila: 'ED', t: 'Reglas del equipo', e: '📕', d: 'Todo lo que las reglas de palabras clave del equipo llaman «delito» (el método anterior al catálogo de Sonia). Es una segunda opinión independiente; la categoría la calculamos nosotros, no viene del ECU 911.' },
 ];
 function Escenarios({ D, esc, setEsc, ir }) {
   const E = D.esc;

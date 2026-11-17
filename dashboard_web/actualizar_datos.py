@@ -68,7 +68,7 @@ def pron_esc(e):
 cmp_=pd.read_excel(os.path.join(R,"05_documentos","Comparacion_escenarios_objetivo.xlsx"))
 cmp_=cmp_.set_index("Indicador").T.reset_index().rename(columns={"index":"escenario"})
 ter=pd.read_excel(os.path.join(R,"05_documentos","Terminos_por_justificar_ampliar_base.xlsx"),sheet_name="Por justificar")
-ter=ter[["Tipo de registro","Subtipo (ECU 911)","Registros","Código de Sonia","Nivel de propuesta","Código propuesto por el equipo","Artículo COIP / protocolo que lo justifica","Justificación"]].fillna("")
+ter=ter[["Tipo de registro (regla de palabras clave del equipo; no es del ECU 911)","Subtipo (ECU 911)","Registros","Código de Sonia","Nivel de propuesta","Código propuesto por el equipo","Artículo COIP / protocolo que lo justifica","Justificación"]].fillna("")
 ter.columns=["tipo","subtipo","registros","sonia","nivel","propuesto","articulo","justificacion"]
 import math
 def _alta(r,u=25):
@@ -77,10 +77,24 @@ _n={"Base (Sonia)":sum(_alta(r) for r in pron),"A":sum(_alta(r) for r in pron_es
 def _alerta(r,u=25):
     az=math.sqrt(max(r["media_52_semanas"],0.1)); dif=r["prediccion"]-r["media_52_semanas"]
     return (r["indice"]>=100+u and dif>=az) or (r["indice"]>=100+u/2 and dif>=az/2)
+_ed=os.path.join(R,"_escenarios","ED","modelos","10_resultados_modelos.xlsx"); _pe={}
+if os.path.exists(_ed): _pe["ED"]=pron_esc("ED")
 _m={"Base (Sonia)":sum(_alerta(r) for r in pron),"A":sum(_alerta(r) for r in pron_esc("A")),"A+B":sum(_alerta(r) for r in pron_esc("AB"))}
+if "ED" in _pe:
+    _m["ED"]=sum(_alerta(r) for r in _pe["ED"])
+    _mm=pd.read_excel(_ed,sheet_name="Resumen MAE").set_index("modelo"); _e=_mm.loc["Elegido por zona"]
+    _q=pd.DataFrame(_pe["ED"]); _l=_q[_q.horizonte==1].set_index("parroquia_corta").media_52_semanas; _t=_q.groupby("parroquia_corta").prediccion.sum()
+    _nd=int(pd.read_excel(os.path.join(R,"_escenarios","ED","tablas","07b_objetivo_delictivo.xlsx"),sheet_name="Codigo COIP").set_index("codigo_coip").loc[1,"registros"])
+    _row={"escenario":"ED","Delitos (registros)":_nd,"Promedio semanal Riobamba (52 sem)":round(_l["RIOBAMBA"],1),"Error MAE Riobamba":round(_e["Urbana (Riobamba)"],2),
+      "Error relativo Riobamba %":round(100*_e["Urbana (Riobamba)"]/_l["RIOBAMBA"],1),"Promedio semanal Cubijíes":round(_l["CUBIJIES"],1),"MAE Cubijíes":round(_e["Cubijíes"],2),
+      "Error relativo Cubijíes %":round(100*_e["Cubijíes"]/_l["CUBIJIES"]),"Promedio semanal Flores":round(_l["FLORES"],1),"MAE Flores":round(_e["Flores"],2),
+      "Error relativo Flores %":round(100*_e["Flores"]/_l["FLORES"]),"MAE todas las parroquias":round(_e["Todas las parroquias"],2),
+      "Mejor modelo urbano":_mm["Urbana (Riobamba)"].idxmin(),"Pronóstico 12 sem. Riobamba":round(_t["RIOBAMBA"]),
+      "Pronóstico 12 sem. Cubijíes":round(_t["CUBIJIES"],1),"Pronóstico 12 sem. Flores":round(_t["FLORES"],1)}
+    cmp_=pd.concat([cmp_,pd.DataFrame([_row])],ignore_index=True)
 cmp_=cmp_.drop(columns=["Alertas altas (12 sem × parroquias)"],errors="ignore")
 cmp_["Alertas (altas o medias, 12 semanas)"]=cmp_["escenario"].map(_m)
-esc=dict(pron={"A":pron_esc("A"),"AB":pron_esc("AB")},comparacion=cmp_.to_dict("records"),terminos=ter.to_dict("records"))
+esc=dict(pron={"A":pron_esc("A"),"AB":pron_esc("AB"),**_pe},comparacion=cmp_.to_dict("records"),terminos=ter.to_dict("records"))
 D=dict(geo=feats,pron=pron,metricas=mae,resumen=res,azar=azar,rv=rv,variables=var,mensual=mens,cambio=cambio,backtest=back,
        codigo=cod,tipo=tipo,antes=av,porano=pa,abigeato=ab,esc=esc,generado=dt.date.today().isoformat())
 json.dump(D,open(os.path.join(os.path.dirname(os.path.abspath(__file__)),"data.tmp"),"w"),ensure_ascii=False,separators=(",",":"),default=str)

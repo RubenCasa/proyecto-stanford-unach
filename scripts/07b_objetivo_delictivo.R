@@ -64,7 +64,13 @@ rb <- rb %>% select(-any_of(c("codigo_coip", "articulo_coip", "clave"))) %>%
 # [ESCENARIOS 17-nov] Si ESCENARIO = "A" o "AB", se suman los subtipos justificados por el equipo
 # (05_documentos/Terminos_por_justificar_ampliar_base.xlsx). Sin variable = base de Sonia.
 ESC <- Sys.getenv("ESCENARIO", "")
-if (nzchar(ESC)) {
+if (ESC == "ED") {
+  # Escenario ED: todo lo que las reglas de palabras clave del equipo (_comun.R) clasifican como "Delito"
+  # (el método de antes del catálogo de Sonia; la categoría la calcula el equipo, NO viene del ECU 911).
+  rb <- rb %>% mutate(codigo_coip = if_else(servicio == SERVICIO_FOCO & tipo_registro == "Delito", 1L, codigo_coip),
+                      delictivo = servicio == SERVICIO_FOCO & codigo_coip == 1L)
+  message("ESCENARIO ED: delitos = ", sum(rb$delictivo, na.rm = TRUE))
+} else if (nzchar(ESC)) {
   ov <- read_excel(file.path(DIR_DOCS, "Terminos_por_justificar_ampliar_base.xlsx"), sheet = "Por justificar")
   niv <- if (ESC == "A") "A" else c("A", "B")
   claves_ov <- clave_subtipo(ov$`Subtipo (ECU 911)`[substr(ov$`Nivel de propuesta`, 1, 1) %in% niv])

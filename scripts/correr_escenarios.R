@@ -3,7 +3,7 @@ log <- "_github/log_escenarios.txt"; w <- function(...) { con <- file(log, "a");
 cat("", file = log)
 copiar <- function(a, b, patron = NULL) { dir.create(b, recursive = TRUE, showWarnings = FALSE)
   fs <- list.files(a, pattern = patron, full.names = TRUE); file.copy(fs, b, overwrite = TRUE) }
-for (esc in c("A", "AB")) {
+for (esc in strsplit(Sys.getenv("ESCENARIOS", "A,AB"), ",")[[1]]) {
   Sys.setenv(ESCENARIO = esc); w("== Escenario ", esc, " ==")
   for (s in c("07b_objetivo_delictivo.R", "09_features.R", "10_modelos.R")) {
     t0 <- Sys.time()
