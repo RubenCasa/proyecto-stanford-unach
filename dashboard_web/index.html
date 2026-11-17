@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Proyecto STANFORD · Tablero predictivo de delitos · Riobamba</title>
+<meta name="description" content="Tablero predictivo de delitos explícitos (COIP) a partir de datos ECU 911 · Riobamba, Flores y Cubijíes · UNACH">
+<link rel="stylesheet" href="vendor/leaflet/leaflet.css">
+<style>
+:root{--bg:#0b1b2b;--bg2:#10263b;--card:#ffffff;--ink:#15283a;--mut:#64788b;--line:#e3e9ef;--page:#f3f6f9;
+--azul:#1f6fb2;--cian:#2bb3c0;--ambar:#f0a829;--rojo:#e0533a;--verde:#3f9d6b;--viol:#7d5bbe}
+*{box-sizing:border-box;margin:0}
+body{font-family:"Segoe UI",system-ui,-apple-system,Roboto,sans-serif;background:var(--page);color:var(--ink);display:flex;min-height:100vh}
+aside{width:250px;background:linear-gradient(180deg,var(--bg),var(--bg2));color:#cfe0ee;position:fixed;inset:0 auto 0 0;padding:26px 18px;display:flex;flex-direction:column;gap:6px;z-index:5}
+.logo{display:flex;gap:10px;align-items:center;margin-bottom:22px}
+.logo i{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,var(--cian),var(--azul));display:grid;place-items:center;color:#fff;font-style:normal;font-weight:800}
+.logo b{display:block;color:#fff;font-size:15px;letter-spacing:.3px}.logo small{font-size:11px;color:#8fb0c8}
+nav a{display:flex;gap:11px;align-items:center;padding:11px 13px;border-radius:11px;color:#b9d0e2;text-decoration:none;font-size:14px;cursor:pointer;transition:.15s}
+nav a:hover{background:rgba(255,255,255,.07);color:#fff}
+nav a.on{background:rgba(43,179,192,.18);color:#fff;box-shadow:inset 3px 0 0 var(--cian)}
+nav svg{width:18px;height:18px;flex:none}
+.pie{margin-top:auto;font-size:11px;color:#7fa0b8;line-height:1.5;border-top:1px solid rgba(255,255,255,.1);padding-top:14px}
+main{margin-left:250px;flex:1;padding:28px 34px 60px;max-width:1400px}
+header.top{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap;margin-bottom:22px}
+h1{font-size:26px;letter-spacing:-.4px}h1 span{color:var(--azul)}
+.sub{color:var(--mut);font-size:13.5px;margin-top:4px;max-width:720px}
+.chip{background:#fff;border:1px solid var(--line);border-radius:999px;padding:7px 14px;font-size:12.5px;color:var(--mut)}
+.chip b{color:var(--ink)}
+section{display:none;animation:in .3s}section.on{display:block}
+@keyframes in{from{opacity:0;transform:translateY(6px)}to{opacity:1}}
+.grid{display:grid;gap:16px}.g4{grid-template-columns:repeat(4,1fr)}.g3{grid-template-columns:repeat(3,1fr)}.g2{grid-template-columns:1fr 1fr}.g21{grid-template-columns:2fr 1fr}.g12{grid-template-columns:1fr 2fr}
+.card{background:var(--card);border-radius:16px;padding:20px;box-shadow:0 1px 2px rgba(16,38,59,.05),0 8px 24px rgba(16,38,59,.04);border:1px solid #edf1f5}
+.card h3{font-size:14.5px;margin-bottom:3px}.card p.n{font-size:12.5px;color:var(--mut);margin-bottom:12px;line-height:1.45}
+.kpi{position:relative;overflow:hidden}
+.kpi .v{font-size:32px;font-weight:800;letter-spacing:-1px;margin:6px 0 2px}
+.kpi .l{font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:.6px;font-weight:600}
+.kpi .d{font-size:12.5px;color:var(--mut)}
+.kpi:before{content:"";position:absolute;right:-26px;top:-26px;width:90px;height:90px;border-radius:50%;background:var(--c,var(--azul));opacity:.12}
+.badge{display:inline-block;padding:3px 10px;border-radius:999px;font-size:11.5px;font-weight:700}
+.b-Normal{background:#e1f2e8;color:#23724a}.b-Media{background:#fdecc8;color:#8a5a00}.b-Alta{background:#fbdcd5;color:#a8321d}
+select{font:inherit;padding:8px 12px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink)}
+.row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.seg{display:inline-flex;background:#eaf0f5;border-radius:11px;padding:3px}.seg button{border:0;background:none;padding:7px 13px;border-radius:9px;font:inherit;font-size:13px;color:var(--mut);cursor:pointer}.seg button.on{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12);font-weight:600}
+table{width:100%;border-collapse:collapse;font-size:13px}th{text-align:left;color:var(--mut);font-weight:600;font-size:11.5px;text-transform:uppercase;letter-spacing:.5px;padding:8px 10px;border-bottom:1px solid var(--line)}td{padding:9px 10px;border-bottom:1px solid #f0f3f6}tr:hover td{background:#f8fafc}
+td.r,th.r{text-align:right;font-variant-numeric:tabular-nums}
+svg text{font-family:inherit}
+.tip{position:fixed;pointer-events:none;background:#0b1b2b;color:#fff;padding:7px 11px;border-radius:9px;font-size:12px;opacity:0;transition:.1s;z-index:20;max-width:240px;line-height:1.4}
+.bar{display:flex;align-items:center;gap:10px;margin:7px 0;font-size:12.5px}.bar .nm{width:170px;flex:none;color:var(--ink)}.bar .tr{flex:1;background:#eef2f6;border-radius:6px;height:14px;overflow:hidden}.bar .fi{height:100%;border-radius:6px}.bar .nu{width:70px;text-align:right;color:var(--mut);font-variant-numeric:tabular-nums}
+.leg{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--mut);margin-top:8px}.leg i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.aviso{background:#fff7e0;border:1px solid #f4dfa0;color:#6b5200;padding:12px 15px;border-radius:12px;font-size:13px;line-height:1.5}
+.hero{background:linear-gradient(120deg,var(--bg),#16405f);color:#fff;border:0}.hero h3{font-size:17px}.hero p.n{color:#b9d0e2}
+[data-t=dark]{--page:#0a1520;--card:#122436;--ink:#e6eef5;--mut:#8fa8bc;--line:#223a50}
+[data-t=dark] .card{border-color:#1d3347;box-shadow:none}[data-t=dark] .bar .tr{background:#1b3248}[data-t=dark] td{border-color:#1b3248}[data-t=dark] tr:hover td{background:#16293c}
+[data-t=dark] select,[data-t=dark] input{background:#0f2133;color:var(--ink);border-color:var(--line)}[data-t=dark] .seg{background:#0f2133}[data-t=dark] .seg button.on{background:#1d3a54;color:#fff}
+[data-t=dark] .chip{background:#122436;border-color:#223a50}[data-t=dark] .aviso{background:#2a2412;border-color:#5c4b17;color:#f3dc9a}
+[data-t=dark] line[stroke="#e8eef3"]{stroke:#1d3347}[data-t=dark] path[stroke="#fff"]{stroke:#122436}
+.btn{border:0;background:var(--azul);color:#fff;border-radius:10px;padding:8px 16px;font:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:.15s}.btn:hover{filter:brightness(1.1)}.btn.sec{background:#e4ecf3;color:var(--ink)}[data-t=dark] .btn.sec{background:#1d3a54;color:#fff}
+input[type=range]{accent-color:var(--azul);width:100%}
+input[type=search]{font:inherit;padding:8px 12px;border-radius:10px;border:1px solid var(--line);min-width:200px}
+.pills{display:flex;gap:6px;flex-wrap:wrap}.pill{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:5px 12px;font-size:12.5px;cursor:pointer;color:var(--mut);transition:.15s;user-select:none}.pill.on{background:var(--azul);color:#fff;border-color:var(--azul)}
+th.s{cursor:pointer}th.s:hover{color:var(--azul)}
+.tgl{position:absolute;right:0;top:0}
+.big{font-size:44px;font-weight:800;letter-spacing:-1.5px;line-height:1}
+.pulse{animation:pl 1.6s infinite}@keyframes pl{50%{opacity:.55}}
+path[data-n]{transition:fill .5s ease}
+.card{transition:transform .15s,box-shadow .15s}.card:hover{transform:translateY(-2px)}
+.bar .fi{transition:width .6s cubic-bezier(.2,.8,.2,1)}
+.mapwrap{position:relative;height:calc(100vh - 150px);min-height:560px;border-radius:18px;overflow:hidden;box-shadow:0 10px 40px rgba(11,27,43,.18);border:1px solid var(--line)}
+#mapa{position:absolute;inset:0;background:#dfe7ee}
+.glass{position:absolute;z-index:500;background:rgba(255,255,255,.88);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.6);border-radius:16px;padding:16px;box-shadow:0 8px 30px rgba(11,27,43,.18)}
+[data-t=dark] .glass{background:rgba(14,30,46,.86);border-color:rgba(255,255,255,.08);color:var(--ink)}
+.pnl-l{left:14px;top:14px;width:320px}.pnl-r{right:14px;top:14px;width:330px;max-height:calc(100% - 28px);overflow:auto}.pnl-b{left:14px;bottom:26px;padding:10px 14px}
+.pnl-t{left:50%;transform:translateX(-50%);top:14px;padding:6px}
+.lbl{background:rgba(255,255,255,.85);border:0;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.25);font:600 11px "Segoe UI",system-ui,sans-serif;color:#15283a;padding:2px 7px}
+.lbl:before{display:none}.lbl b{color:#1f6fb2}
+.leaflet-container{font-family:inherit}
+.leaflet-control-zoom a{border-radius:10px!important}
+@media(max-width:1000px){.pnl-r{display:none}.pnl-l{width:260px}}
+@media(max-width:1000px){aside{position:static;width:100%;flex-direction:row;flex-wrap:wrap;padding:12px}body{flex-direction:column}main{margin:0;padding:18px}.g4,.g3,.g2,.g21,.g12{grid-template-columns:1fr 1fr}.pie,.logo small{display:none}.logo{margin:0}}
+@media(max-width:620px){.g4,.g3,.g2,.g21,.g12{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<aside>
+  <div class="logo"><i>S</i><div><b>STANFORD</b><small>UNACH · Ciencia de Datos e IA</small></div></div>
+  <nav id="nav"></nav>
+  <div class="pie">Fuente: ECU 911 (jul-2021 a sep-2026). Delitos explícitos según catálogo COIP (código 1). Los datos de Fiscalía aún no se incorporan.</div>
+</aside>
+<main>
+  <header class="top">
+    <div><h1>Delitos en <span>Riobamba</span>: lo que pasó y lo que viene</h1>
+    <div class="sub">Predicción semanal y tendencia hasta 2029, con foco en las parroquias rurales <b>Flores</b> y <b>Cubijíes</b>.</div></div>
+    <div class="row" style="margin:0"><button class="btn sec" id="btnTema">🌙 Modo oscuro</button><div class="chip">Datos actualizados: <b id="fgen"></b></div></div>
+  </header>
+
+  <section id="s-resumen" class="on">
+    <div class="grid g4" id="kpis"></div>
+    <div class="grid g21" style="margin-top:16px">
+      <div class="card"><h3>Delitos por año en el cantón</h3><p class="n">Suma de todas las parroquias. Los años 2027 a 2029 son pronóstico.</p><div id="c-anual"></div></div>
+      <div class="card"><h3>¿Qué es un delito en este proyecto?</h3><p class="n">Clasificación de Sonia Calle según el COIP, sobre todos los registros del ECU 911.</p><div id="c-codigo"></div></div>
+    </div>
+    <div class="grid g2" style="margin-top:16px">
+      <div class="card"><h3>Qué registra el ECU 911 en Seguridad Ciudadana</h3><p class="n">Menos de la mitad son delitos; casi la mitad son pedidos de patrullaje.</p><div id="c-tipo"></div></div>
+      <div class="card"><h3>Efecto de predecir solo delitos</h3><p class="n">Promedio semanal por parroquia, antes (todo Seguridad Ciudadana) y ahora (solo delitos explícitos).</p><div id="c-antes"></div></div>
+    </div>
+  </section>
+
+  <section id="s-pron">
+    <div class="card" style="margin-bottom:16px"><div class="row" style="margin:0;justify-content:space-between"><div style="flex:1;min-width:260px"><h3>¿Qué tan sensible quieres la alerta?</h3><p class="n" style="margin:0">Hay alerta <b>Alta</b> cuando el pronóstico supera el promedio de las últimas 52 semanas en <b id="uVal">25</b> % o más. Mueve la barra y todo se recalcula (tarjetas, mapa y resumen). Es una guía para priorizar, no una certeza.</p></div><div style="width:280px"><input type="range" id="umbral" min="5" max="60" step="5" value="25"><div style="display:flex;justify-content:space-between;font-size:11.5px;color:var(--mut)"><span>Más alertas</span><span>Menos alertas</span></div></div></div></div>
+    <div class="grid g3" id="tarj"></div>
+    <div class="card" style="margin-top:16px"><h3>Detalle: próximas 4 semanas</h3><p class="n">Rango probable = intervalo de la predicción. «Prob. ≥ 1» = probabilidad de que haya al menos un delito en la semana.</p>
+      <div class="row"><select id="selSem"></select><input type="search" id="busq" placeholder="Buscar parroquia…"><button class="btn sec" id="csvPron">Descargar CSV</button></div><div id="t-pron"></div></div>
+  </section>
+
+  <section id="s-mapa">
+    <div class="mapwrap">
+      <div id="mapa"></div>
+      <div class="glass pnl-t"><div class="seg" id="segBase"><button data-b="claro" class="on">Calles</button><button data-b="oscuro">Oscuro</button><button data-b="sat">Satélite</button></div></div>
+      <div class="glass pnl-l">
+        <h3 style="font-size:15px;margin-bottom:8px">Capa a mostrar</h3>
+        <div class="seg" id="segMapa" style="display:flex;flex-wrap:wrap"></div>
+        <div id="ctlTiempo" style="margin-top:14px"><div class="row" style="margin-bottom:4px"><button class="btn" id="btnPlay">▶ Reproducir</button><span class="big" id="lblMes" style="font-size:22px">–</span></div><span class="chip" id="lblTipo"></span><input type="range" id="slMes" min="0" max="0" value="0" style="margin-top:10px"><p class="n" style="margin:4px 0 0">Delitos de los 12 meses que terminan en la fecha, por km². Después de sep-2026 es pronóstico.</p></div>
+        <div class="row" style="margin:12px 0 0"><button class="btn sec" id="btnFoco">★ Ir a Flores y Cubijíes</button><button class="btn sec" id="btnTodo">Ver todo</button></div>
+      </div>
+      <div class="glass pnl-r" id="detMapa"></div>
+      <div class="glass pnl-b"><div class="leg" id="legMapa" style="margin:0"></div></div>
+    </div>
+  </section>
+
+  <section id="s-tend">
+    <div class="card">
+      <div class="row"><h3 style="margin:0">Tendencia mensual hasta 2029</h3><select id="selPar"></select><div class="seg" id="segTend"><button data-m="mes" class="on">Mensual</button><button data-m="acum">Últimos 12 meses</button><button data-m="comp">Comparar</button></div><span id="modTend" class="chip"></span></div>
+      <div class="pills" id="pillsComp" style="display:none;margin-bottom:10px"></div>
+      <p class="n">Línea sólida = datos reales. Línea punteada = pronóstico. Bandas = rango probable al 80 % y 95 %. En parroquias rurales con muy pocos casos las bandas son amplias: es lo honesto.</p>
+      <div id="c-tend"></div>
+    </div>
+    <div class="grid g2" style="margin-top:16px">
+      <div class="card"><h3>Delitos por año</h3><p class="n">Real 2022-2025 y pronóstico 2026-2029 (2026 incluye meses ya observados).</p><div id="t-anual"></div></div>
+      <div class="card"><h3>Cambio 2025 → 2029 por parroquia</h3><p class="n">Parroquias con pocos casos cambian mucho en porcentaje por muy poco en cantidad.</p><div id="c-cambio"></div></div>
+    </div>
+  </section>
+
+  <section id="s-modelos">
+    <div class="grid g4" id="kmod"></div>
+    <div class="grid g2" style="margin-top:16px">
+      <div class="card"><h3>Error semanal de cada modelo (MAE)</h3><p class="n">Último año reservado como prueba (52 semanas). Menor es mejor. Todas las parroquias.</p><div id="c-mae"></div></div>
+      <div class="card"><h3>Predicho vs real en la prueba</h3><p class="n">Total de delitos en 52 semanas de prueba, por parroquia.</p><div id="t-rv"></div></div>
+    </div>
+    <div class="card" style="margin-top:16px"><h3>Qué tan bien se puede predecir (límite del azar)</h3><p class="n">Aun un modelo perfecto falla por la aleatoriedad de los delitos. «Error relativo» compara el error del modelo con el semanal medio.</p><div id="t-azar"></div></div>
+  </section>
+
+  <section id="s-abig">
+    <div class="grid g3" id="kabig"></div>
+    <div class="grid g2" style="margin-top:16px">
+      <div class="card"><h3>Abigeato por año</h3><p class="n">2021 (desde julio) y 2026 (hasta septiembre) son años incompletos.</p><div id="a-anio"></div></div>
+      <div class="card"><h3>Promedio por mes del año</h3><p class="n">Más casos en mayo y entre agosto y octubre. Febrero queda algo bajo porque febrero de 2023 no trae el tipo de delito.</p><div id="a-mes"></div></div>
+    </div>
+    <div class="grid g2" style="margin-top:16px">
+      <div class="card"><h3>Dónde ocurre</h3><div id="a-par"></div></div>
+      <div class="card"><h3>Qué día de la semana</h3><div id="a-dia"></div></div>
+    </div>
+  </section>
+
+  <section id="s-acerca">
+    <div class="grid g2">
+      <div class="card hero"><h3>De dónde sale cada número</h3><p class="n">Todo se calcula con scripts de R reproducibles (01 a 13) que están en el repositorio del proyecto.</p>
+        <ol style="font-size:13.5px;line-height:1.8;padding-left:18px;color:#dbe8f2"><li>Se unifican los archivos del ECU 911 y se limpian (fechas, duplicados, parroquias).</li><li>Se filtra Riobamba y se clasifica cada registro con el catálogo COIP.</li><li>Se predice solo el código 1 (delito explícito) por parroquia y semana.</li><li>Zona urbana: random forest. Parroquias rurales: binomial negativa.</li><li>La tendencia a 2029 usa el método que mejor acertó en un backtest de 24 meses.</li></ol></div>
+      <div class="card"><h3>Limitaciones</h3><ul style="font-size:13.5px;line-height:1.8;padding-left:18px;color:var(--ink)">
+        <li>El ECU 911 registra llamadas, no sentencias: lesiones, tránsito y drogas dependen de datos que solo tiene la Fiscalía.</li>
+        <li>Flores y Cubijíes tienen pocos casos: 91 % y 64 % de sus semanas no tienen ninguno. Se pronostica una probabilidad, no un número exacto.</li>
+        <li>Febrero de 2023 no trae subtipo y se estimó con los meses vecinos.</li>
+        <li>La base de la Fiscalía se incorporará para validar el modelo.</li></ul>
+        <p class="n" style="margin-top:12px">Equipo: Proyecto STANFORD · UNACH · tutores Mg. Ronny Pomboza y Mg. Johanna Moyano.</p></div>
+    </div>
+  </section>
+</main>
+<div class="tip" id="tip"></div>
+<script src="lib/logica.js"></script>
+<script src="vendor/leaflet/leaflet.js"></script>
+<script src="data.js"></script>
+<script type="module">
+let API_OFF=false,FUENTE='local';
+async function api(ep,q={}){const qs=new URLSearchParams(q).toString();
+  if(location.protocol.startsWith('http')&&!API_OFF){try{const r=await fetch(`/api/${ep}${qs?'?'+qs:''}`);if(r.ok){FUENTE='API';return await r.json()}}catch(e){}API_OFF=true}
+  FUENTE='local';return window.LOGICA[ep](window.DATA,q)}
+const D=await api('datos'), $=s=>document.querySelector(s);
+const fmt=(x,d=0)=>x==null?'–':Number(x).toLocaleString('es-EC',{minimumFractionDigits:d,maximumFractionDigits:d});
+const nom=s=>({'CUBIJIES':'Cubijíes','LICAN':'Licán','PUNGALA':'Pungalá','PUNIN':'Punín','SAN JUAN':'San Juan','SAN LUIS':'San Luis','QUIMIAG':'Quimiag','LICTO':'Licto','CALPI':'Calpi','CACHA':'Cacha','FLORES':'Flores','RIOBAMBA':'Riobamba'}[s]||s);
+const FOCO=['FLORES','CUBIJIES'];
+const COL={Normal:'#8bc9a3',Media:'#f0a829',Alta:'#e0533a'};
+const tip=$('#tip');
+function tipOn(e,h){tip.innerHTML=h;tip.style.opacity=1;tip.style.left=Math.min(e.clientX+14,innerWidth-250)+'px';tip.style.top=(e.clientY+14)+'px'}
+function tipOff(){tip.style.opacity=0}
+$('#fgen').textContent=(FUENTE==='API'?'API en vivo · ':'')+new Date(D.generado).toLocaleDateString('es-EC',{day:'numeric',month:'long',year:'numeric'});
+
+/* navegación */
+const ICO={resumen:'M3 13h8V3H3zm0 8h8v-6H3zm10 0h8V11h-8zm0-18v6h8V3z',pron:'M12 2l3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-7.5L2 9h7z',mapa:'M20.5 3l-6 2-5-2-6 2v16l6-2 5 2 6-2zM9 5.5l5 1.7v11.3l-5-1.7z',tend:'M3 17l6-6 4 4 8-8v6h2V3h-10v2h6l-6 6-4-4-8 8z',modelos:'M12 3l9 4.5v9L12 21l-9-4.5v-9zm0 2.2L5.5 8.4 12 11.6l6.5-3.2z',abig:'M4 20h16v-2H4zM6 8l3-4 3 4 3-4 3 4v8H6z',acerca:'M12 2a10 10 0 100 20 10 10 0 000-20zm1 15h-2v-6h2zm0-8h-2V7h2z'};
+const SEC=[['resumen','Resumen'],['pron','Pronóstico y alertas'],['mapa','Mapa'],['tend','Tendencia a 2029'],['modelos','Modelos'],['abig','Abigeato'],['acerca','Método y límites']];
+$('#nav').innerHTML=SEC.map(([k,t],i)=>`<a data-k="${k}" class="${i?'':'on'}"><svg viewBox="0 0 24 24" fill="currentColor"><path d="${ICO[k]}"/></svg>${t}</a>`).join('');
+$('#nav').onclick=e=>{const a=e.target.closest('a');if(!a)return;document.querySelectorAll('nav a').forEach(x=>x.classList.toggle('on',x===a));document.querySelectorAll('section').forEach(s=>s.classList.toggle('on',s.id==='s-'+a.dataset.k));scrollTo(0,0);location.hash=a.dataset.k;if(a.dataset.k==='mapa')setTimeout(()=>{map.invalidateSize();if(!sel)todo()},60)};
+
+/* utilidades de gráficos SVG */
+function barras(el,items,{color='#1f6fb2',fmtv=v=>fmt(v),max}={}){
+  const m=max||Math.max(...items.map(i=>i.v));
+  el.innerHTML=items.map(i=>`<div class="bar"><span class="nm">${i.n}</span><span class="tr"><span class="fi" style="width:${Math.max(1,i.v/m*100)}%;background:${i.c||color};display:block"></span></span><span class="nu">${fmtv(i.v)}</span></div>`).join('')}
+function lineas(el,{w=760,h=300,x,series,bandas=[],yfmt=v=>fmt(v),xlab=[],corte=null,ymin=0}){
+  const p={l:46,r:14,t:12,b:30}, iw=w-p.l-p.r, ih=h-p.t-p.b, n=x.length;
+  const all=series.flatMap(s=>s.y).concat(bandas.flatMap(b=>b.hi)).filter(v=>v!=null);
+  const mx=Math.max(...all)*1.08||1, mn=ymin;
+  const X=i=>p.l+i/(n-1||1)*iw, Y=v=>p.t+ih-(v-mn)/(mx-mn)*ih;
+  let s=`<svg viewBox="0 0 ${w} ${h}" width="100%" style="overflow:visible">`;
+  for(let k=0;k<=4;k++){const v=mn+(mx-mn)*k/4,y=Y(v);s+=`<line x1="${p.l}" x2="${w-p.r}" y1="${y}" y2="${y}" stroke="#e8eef3"/><text x="${p.l-8}" y="${y+4}" text-anchor="end" font-size="11" fill="#8696a5">${yfmt(v)}</text>`}
+  xlab.forEach(([i,t])=>s+=`<text x="${X(i)}" y="${h-8}" text-anchor="middle" font-size="11" fill="#8696a5">${t}</text>`);
+  bandas.forEach(b=>{let up='',dn='';b.hi.forEach((v,i)=>{if(v!=null)up+=`${up?'L':'M'}${X(i)},${Y(v)}`});for(let i=n-1;i>=0;i--){if(b.lo[i]!=null)dn+=`L${X(i)},${Y(b.lo[i])}`}s+=`<path d="${up}${dn}Z" fill="${b.c}" opacity="${b.o}"/>`});
+  if(corte!=null)s+=`<line x1="${X(corte)}" x2="${X(corte)}" y1="${p.t}" y2="${p.t+ih}" stroke="#9fb0bf" stroke-dasharray="4 4"/><text x="${X(corte)+6}" y="${p.t+12}" font-size="11" fill="#8696a5">pronóstico →</text>`;
+  series.forEach(se=>{let d='';se.y.forEach((v,i)=>{if(v!=null)d+=`${d&&se.y[i-1]!=null?'L':'M'}${X(i)},${Y(v)}`});s+=`<path d="${d}" fill="none" stroke="${se.c}" stroke-width="2.4" ${se.dash?'stroke-dasharray="6 5"':''} stroke-linejoin="round"/>`});
+  s+=`<rect x="${p.l}" y="${p.t}" width="${iw}" height="${ih}" fill="transparent" id="hov"/><line id="hl" y1="${p.t}" y2="${p.t+ih}" stroke="#15283a" stroke-opacity=".25" style="display:none"/></svg>`;
+  el.innerHTML=s;
+  const r=el.querySelector('#hov'),hl=el.querySelector('#hl');
+  r.onmousemove=e=>{const b=r.getBoundingClientRect(),i=Math.round((e.clientX-b.left)/b.width*(n-1));hl.setAttribute('x1',X(i));hl.setAttribute('x2',X(i));hl.style.display='';
+    tipOn(e,`<b>${x[i]}</b><br>`+series.map(se=>se.y[i]!=null?`${se.n}: <b>${yfmt(se.y[i])}</b>`:'').filter(Boolean).join('<br>')+(bandas[0]&&bandas[0].hi[i]!=null?`<br>Rango 80 %: ${yfmt(bandas[1]?bandas[1].lo[i]:bandas[0].lo[i])} – ${yfmt(bandas[1]?bandas[1].hi[i]:bandas[0].hi[i])}`:''))};
+  r.onmouseleave=()=>{hl.style.display='none';tipOff()};
+}
+function columnas(el,items,{w=520,h=230,color='#1f6fb2',yfmt=v=>fmt(v,1)}={}){
+  const p={l:34,r:8,t:10,b:28},iw=w-p.l-p.r,ih=h-p.t-p.b,mx=Math.max(...items.map(i=>i.v))*1.15||1,bw=iw/items.length;
+  let s=`<svg viewBox="0 0 ${w} ${h}" width="100%">`;
+  for(let k=0;k<=3;k++){const v=mx*k/3,y=p.t+ih-v/mx*ih;s+=`<line x1="${p.l}" x2="${w-p.r}" y1="${y}" y2="${y}" stroke="#e8eef3"/><text x="${p.l-6}" y="${y+4}" text-anchor="end" font-size="10.5" fill="#8696a5">${yfmt(v)}</text>`}
+  items.forEach((it,i)=>{const bh=it.v/mx*ih,x=p.l+i*bw+bw*.18;s+=`<rect x="${x}" y="${p.t+ih-bh}" width="${bw*.64}" height="${bh}" rx="4" fill="${it.c||color}" data-t="<b>${it.n}</b><br>${yfmt(it.v)}"/><text x="${x+bw*.32}" y="${h-9}" text-anchor="middle" font-size="10.5" fill="#8696a5">${it.l||it.n}</text>`});
+  el.innerHTML=s+'</svg>';
+  el.querySelectorAll('rect').forEach(r=>{r.onmousemove=e=>tipOn(e,r.dataset.t);r.onmouseleave=tipOff;r.style.cursor='default'})}
+function tabla(el,cols,rows){el.innerHTML=`<table><thead><tr>${cols.map(c=>`<th class="${c.r?'r':''} ${c.o?'s':''}" ${c.o?`data-o="${c.o}"`:''}>${c.t}${c.o?' ↕':''}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${cols.map(c=>`<td class="${c.r?'r':''}">${c.f?c.f(r):r[c.k]}</td>`).join('')}</tr>`).join('')}</tbody></table>`}
+const badge=a=>`<span class="badge b-${a}">${a}</span>`;
+
+/* ===== RESUMEN ===== */
+const camb=D.cambio, yrs=['2022','2023','2024','2025','2026','2027','2028','2029'];
+const tot=yrs.map(y=>camb.reduce((s,r)=>s+(r[y]||0),0));
+let UMB=25,p1=[];
+const alertaDe=p=>p.alerta;
+async function recalcAlertas(){const r=await api('pronostico',{umbral:UMB});D.pron=r.filas;p1=D.pron.filter(p=>p.horizonte===1)}
+await recalcAlertas();
+const cod1=D.codigo.find(c=>c.codigo_coip===1);
+const resumen=D.resumen[0];
+function kpiHTML(arr){return arr.map(k=>`<div class="card kpi" style="--c:${k[3]}"><div class="l">${k[0]}</div><div class="v" ${k[4]!=null?`data-n="${k[4]}" data-d="${k[5]||0}"`:''}>${k[1]}</div><div class="d">${k[2]}</div></div>`).join('')}
+function contar(root){root.querySelectorAll('[data-n]').forEach(el=>{const to=+el.dataset.n,d=+el.dataset.d,suf=el.dataset.s||'',t0=performance.now();(function f(t){const k=Math.min(1,(t-t0)/900),e=1-Math.pow(1-k,3);el.textContent=fmt(to*e,d)+suf;if(k<1)requestAnimationFrame(f)})(t0)})}
+function pintaKpis(){const altas=p1.filter(p=>alertaDe(p)==='Alta');
+$('#kpis').innerHTML=kpiHTML([
+ ['Delitos explícitos (COIP)',fmt(cod1.registros),`${cod1.pct} % de los registros`,'var(--azul)',cod1.registros],
+ ['Delitos 2025 en el cantón',fmt(tot[3]),`2029: ${fmt(tot[7])} (${fmt((tot[7]/tot[3]-1)*100,1)} %)`,'var(--cian)',tot[3]],
+ ['Alertas próxima semana',altas.length,altas.length?altas.map(a=>nom(a.parroquia_corta)).join(', '):'ninguna','var(--rojo)'],
+ ['Error del modelo',fmt(resumen['Todas las parroquias'],2),'delitos por semana y parroquia (MAE)','var(--verde)',resumen['Todas las parroquias'],2]
+]);contar($('#kpis'))}
+pintaKpis();
+lineas($('#c-anual'),{x:yrs,h:260,series:[{n:'Delitos',c:'#1f6fb2',y:tot.map((v,i)=>i<4?v:null)},{n:'Pronóstico',c:'#e0533a',dash:1,y:tot.map((v,i)=>i>=3?v:null)}],xlab:yrs.map((y,i)=>[i,y]),corte:4,ymin:0});
+barras($('#c-codigo'),D.codigo.map(c=>({n:c.significado,v:c.registros,c:['#c5d0da','#1f6fb2','#f0a829','#9fb3c4'][c.codigo_coip]})));
+$('#c-codigo').insertAdjacentHTML('beforeend','<p class="n" style="margin-top:12px">El modelo predice solo el <b>código 1</b>. El código 2 se sumará cuando llegue la base de la Fiscalía.</p>');
+barras($('#c-tipo'),D.tipo.map((t,i)=>({n:t.tipo_registro,v:t.registros,c:t.tipo_registro==='Delito'?'#1f6fb2':'#c5d0da'})));
+const av=D.antes.filter(a=>a.media_semanal_antes>15).slice(0,6);
+$('#c-antes').innerHTML='<table><thead><tr><th>Parroquia</th><th class="r">Antes</th><th class="r">Ahora</th><th class="r">% sem. en cero</th></tr></thead><tbody>'+D.antes.map(a=>`<tr><td>${nom(a.parroquia_corta)}</td><td class="r">${fmt(a.media_semanal_antes,1)}</td><td class="r"><b>${fmt(a.media_semanal_ahora,1)}</b></td><td class="r">${fmt(a.pct_semanas_cero_ahora,0)} %</td></tr>`).join('')+'</tbody></table>';
+
+/* ===== PRONÓSTICO ===== */
+function pintaTarj(){$('#tarj').innerHTML=p1.slice().sort((a,b)=>b.indice-a.indice).map(p=>{const al=alertaDe(p);return `<div class="card" style="${al!=='Normal'?'border-color:#f3b9ac':''}"><div class="row" style="justify-content:space-between;margin:0"><h3 style="margin:0">${nom(p.parroquia_corta)}${p.zona_foco?' ★':''}</h3><span class="${al==='Alta'?'pulse':''}">${badge(al)}</span></div>
+ <div style="font-size:30px;font-weight:800;letter-spacing:-1px;margin:8px 0 0">${fmt(p.prediccion,p.prediccion<10?1:0)}<span style="font-size:13px;font-weight:500;color:var(--mut)"> delitos esperados</span></div>
+ <div style="font-size:12.5px;color:var(--mut);margin-top:4px">Rango ${fmt(p.rango_bajo,1)} – ${fmt(p.rango_alto,1)} · Prob. ≥1: <b>${p.prob_al_menos_1} %</b></div>
+ <div style="margin-top:10px"><div style="display:flex;justify-content:space-between;font-size:11.5px;color:var(--mut)"><span>Índice vs promedio anual</span><b style="color:var(--ink)">${p.indice}</b></div><div class="bar" style="margin:4px 0"><span class="tr"><span class="fi" style="display:block;width:${Math.min(100,p.indice/1.5)}%;background:${COL[al]}"></span></span></div></div></div>`}).join('')}
+pintaTarj();
+const sems=[...new Set(D.pron.map(p=>p.semana_inicio))].sort();
+$('#selSem').innerHTML=sems.map((s,i)=>`<option value="${i+1}">Semana ${i+1}: desde ${new Date(s+'T12:00').toLocaleDateString('es-EC',{day:'numeric',month:'short',year:'numeric'})}</option>`).join('');
+let ordK='indice',ordD=-1;
+function filasPron(){const h=+$('#selSem').value,q=($('#busq').value||'').toLowerCase();return D.pron.filter(p=>p.horizonte===h&&nom(p.parroquia_corta).toLowerCase().includes(q)).sort((a,b)=>ordD*((typeof a[ordK]==='string'?a[ordK].localeCompare(b[ordK]):a[ordK]-b[ordK])))}
+function pintaPron(){tabla($('#t-pron'),[{t:'Parroquia',o:'parroquia_corta',f:r=>nom(r.parroquia_corta)+(r.zona_foco?' ★':'')},{t:'Predicción',o:'prediccion',r:1,f:r=>fmt(r.prediccion,1)},{t:'Rango probable',r:1,f:r=>`${fmt(r.rango_bajo,1)} – ${fmt(r.rango_alto,1)}`},{t:'Prom. 52 sem.',o:'media_52_semanas',r:1,f:r=>fmt(r.media_52_semanas,1)},{t:'Prob. ≥ 1',o:'prob_al_menos_1',r:1,f:r=>r.prob_al_menos_1+' %'},{t:'Índice',o:'indice',r:1,k:'indice'},{t:'Alerta',f:r=>badge(alertaDe(r))}],filasPron());
+ $('#t-pron').querySelectorAll('th.s').forEach(th=>th.onclick=()=>{const k=th.dataset.o;if(ordK===k)ordD*=-1;else{ordK=k;ordD=-1}pintaPron()})}
+$('#selSem').onchange=pintaPron;$('#busq').oninput=pintaPron;pintaPron();
+$('#csvPron').onclick=()=>{const f=filasPron(),c='parroquia,semana_inicio,prediccion,rango_bajo,rango_alto,prom_52_sem,prob_al_menos_1,indice,alerta\n'+f.map(r=>[r.parroquia_corta,r.semana_inicio,r.prediccion,r.rango_bajo,r.rango_alto,r.media_52_semanas,r.prob_al_menos_1,r.indice,alertaDe(r)].join(',')).join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([c],{type:'text/csv'}));a.download='pronostico_stanford.csv';a.click()};
+$('#umbral').oninput=async e=>{UMB=+e.target.value;$('#uVal').textContent=UMB;await recalcAlertas();pintaTarj();pintaPron();pintaKpis();if(met==='alerta')pintaMapa()};
+
+/* ===== MAPA (Leaflet + teselas reales) ===== */
+const geo=D.geo, MESES=D.mensual.RIOBAMBA.mes, MN=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+const mesTxt=s=>{const[a,b]=s.split('-');return MN[b-1]+' '+a};
+const MM=await api('mapa');
+const escala=v=>v>50?'#0b3d6e':v>5?'#2f78b7':v>1?'#74b3dc':v>0.1?'#bcdcef':'#e9f3f9';
+const MET={
+ tiempo:{t:'Evolución',d:(g)=>{const i=+$('#slMes').value,m=MM.parroquias[g.nom];return{suma:m.suma[i],km2:m.km2[i],fc:m.fc[i]}},col:d=>escala(d.km2),lbl:d=>fmt(d.suma),txt:d=>`12 meses: <b>${fmt(d.suma)}</b> delitos<br>${fmt(d.km2,2)} por km²${d.fc?'<br><i>incluye pronóstico</i>':''}`,leg:[['> 50 / km²','#0b3d6e'],['5–50','#2f78b7'],['1–5','#74b3dc'],['0,1–1','#bcdcef'],['< 0,1','#e9f3f9']]},
+ alerta:{t:'Alertas',d:g=>p1.find(p=>p.parroquia_corta===g.nom),col:p=>COL[p.alerta],lbl:p=>p.alerta,txt:p=>`Índice ${p.indice} · <b>${p.alerta}</b><br>Predicción ${fmt(p.prediccion,1)} delitos`,leg:[['Normal',COL.Normal],['Media',COL.Media],['Alta',COL.Alta]]},
+ cambio:{t:'Cambio 2025→2029',d:g=>camb.find(c=>c.parroquia_corta===g.nom),col:c=>{const v=c.cambio_2025_2029_pct;return v>10?'#e0533a':v>0?'#f3a58f':v>-10?'#a9d3e8':'#2f86b8'},lbl:c=>(c.cambio_2025_2029_pct>0?'+':'')+fmt(c.cambio_2025_2029_pct,0)+' %',txt:c=>`2025: ${c['2025']} · 2029: ${c['2029']}<br>Cambio <b>${c.cambio_2025_2029_pct} %</b>`,leg:[['Sube > 10 %','#e0533a'],['Sube hasta 10 %','#f3a58f'],['Baja hasta 10 %','#a9d3e8'],['Baja > 10 %','#2f86b8']]},
+ total:{t:'Delitos 2025',d:g=>camb.find(c=>c.parroquia_corta===g.nom),col:c=>{const v=c['2025'];return v>1000?'#0b3d6e':v>50?'#2f78b7':v>10?'#74b3dc':'#bcdcef'},lbl:c=>fmt(c['2025']),txt:c=>`Delitos 2025: <b>${fmt(c['2025'])}</b>`,leg:[['> 1.000','#0b3d6e'],['51–1.000','#2f78b7'],['11–50','#74b3dc'],['≤ 10','#bcdcef']]}};
+let met='tiempo',timer=null,sel=null;
+const map=L.map('mapa',{zoomControl:false,minZoom:9,maxZoom:17,zoomSnap:.25}).setView([-1.67,-78.65],10);
+L.control.zoom({position:'bottomright'}).addTo(map);
+const BASES={claro:L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{attribution:'© OpenStreetMap · © CARTO',subdomains:'abcd',maxZoom:19}),
+ oscuro:L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{attribution:'© OpenStreetMap · © CARTO',subdomains:'abcd',maxZoom:19}),
+ sat:L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{attribution:'Imágenes © Esri',maxZoom:18})};
+let capaBase=BASES.claro.addTo(map);
+$('#segBase').onclick=e=>{const b=e.target.closest('button');if(!b)return;document.querySelectorAll('#segBase button').forEach(x=>x.classList.toggle('on',x===b));map.removeLayer(capaBase);capaBase=BASES[b.dataset.b].addTo(map);capaBase.bringToBack()};
+const fc={type:'FeatureCollection',features:geo.map(g=>({type:'Feature',properties:{nom:g.nom,foco:g.foco,area:g.area},geometry:{type:'MultiPolygon',coordinates:g.poly}}))};
+const capa=L.geoJSON(fc,{style:()=>({weight:1.5,color:'#fff',fillOpacity:.7})}).addTo(map);
+capa.eachLayer(l=>{const g=l.feature.properties;
+  l.bindTooltip('',{permanent:true,direction:'center',className:'lbl'});
+  l.on('mouseover',()=>{if(sel!==g.nom)l.setStyle({weight:3,color:'#0b1b2b'});l.bringToFront()});
+  l.on('mouseout',()=>estilo(l));
+  l.on('click',()=>elegir(g.nom,true))});
+function estilo(l){const g=l.feature.properties,m=MET[met],d=m.d(g);
+  l.setStyle({fillColor:d?m.col(d):'#ccc',fillOpacity:sel&&sel!==g.nom?.45:.74,color:sel===g.nom?'#e0533a':g.foco?'#0b1b2b':'#fff',weight:sel===g.nom?4:g.foco?3:1.4,dashArray:g.foco&&sel!==g.nom?'6 4':null});
+  l.setTooltipContent(`${nom(g.nom)}${d?` · <b>${m.lbl(d)}</b>`:''}`)}
+function pintaMapa(){const m=MET[met];$('#ctlTiempo').style.display=met==='tiempo'?'':'none';
+  const i=+$('#slMes').value;$('#lblMes').textContent=mesTxt(MESES[i]);$('#lblTipo').textContent=MESES[i]>'2026-09'?'Pronóstico':'Dato real';
+  $('#legMapa').innerHTML=m.leg.map(([t,c])=>`<span><i style="background:${c}"></i>${t}</span>`).join('');
+  capa.eachLayer(estilo);if(sel)detalle(sel)}
+function elegir(n,volar){sel=n;capa.eachLayer(estilo);detalle(n);if(volar){const l=capa.getLayers().find(x=>x.feature.properties.nom===n);map.flyToBounds(l.getBounds(),{padding:[60,60],duration:.9,maxZoom:13})}}
+function detalle(n){const g=geo.find(x=>x.nom===n),c=camb.find(x=>x.parroquia_corta===n),p=p1.find(x=>x.parroquia_corta===n),m=D.mensual[n];
+  const ult=m.mes.map((s,i)=>i).filter(i=>MESES[i]>='2023-01');
+  $('#detMapa').innerHTML=`<div class="row" style="justify-content:space-between;margin:0"><h3 style="font-size:18px;margin:0">${nom(n)}${g.foco?' ★':''}</h3><button class="btn sec" id="cierra" style="padding:4px 10px">✕</button></div>
+  <p class="n" style="margin:2px 0 10px">${fmt(g.area,1)} km² · ${g.foco?'Parroquia foco':'Parroquia'}</p>
+  <div class="grid" style="grid-template-columns:1fr 1fr;gap:8px">
+   <div><div class="l" style="font-size:11px;color:var(--mut)">DELITOS 2025</div><div style="font-size:24px;font-weight:800">${fmt(c['2025'])}</div></div>
+   <div><div class="l" style="font-size:11px;color:var(--mut)">PRONÓSTICO 2029</div><div style="font-size:24px;font-weight:800">${fmt(c['2029'])}</div></div>
+   <div><div class="l" style="font-size:11px;color:var(--mut)">CAMBIO</div><div style="font-size:20px;font-weight:800;color:${c.cambio_2025_2029_pct>0?'#e0533a':'#2f86b8'}">${c.cambio_2025_2029_pct>0?'+':''}${c.cambio_2025_2029_pct} %</div></div>
+   <div><div class="l" style="font-size:11px;color:var(--mut)">ALERTA PRÓX. SEMANA</div><div style="margin-top:4px">${badge(p.alerta)}</div></div></div>
+  <p class="n" style="margin:12px 0 2px"><b>Prob. de al menos 1 delito esta semana: ${p.prob_al_menos_1} %</b><br>Predicción ${fmt(p.prediccion,1)} · rango ${fmt(p.rango_bajo,1)}–${fmt(p.rango_alto,1)}</p>
+  <div id="spark"></div><p class="n" style="margin:0">Delitos por mes · línea punteada = pronóstico</p>
+  <button class="btn" id="verTend" style="margin-top:10px;width:100%">Ver tendencia completa →</button>`;
+  const re=ult.map(i=>m.tipo[i]==='Real'?m.inc[i]:null),fo=ult.map(i=>i>=m.tipo.indexOf('Pronóstico')-1?m.inc[i]:null);
+  lineas($('#spark'),{x:ult.map(i=>mesTxt(MESES[i])),w:300,h:130,series:[{n:'Real',c:'#1f6fb2',y:re},{n:'Pronóstico',c:'#e0533a',dash:1,y:fo}],xlab:[],corte:ult.indexOf(m.tipo.indexOf('Pronóstico')),yfmt:v=>fmt(v,v<10?1:0)});
+  $('#cierra').onclick=()=>{sel=null;capa.eachLayer(estilo);$('#detMapa').innerHTML=vacioDet()};
+  $('#verTend').onclick=()=>{$('#selPar').value=n;pintaTend();document.querySelector('nav a[data-k="tend"]').click()}}
+const vacioDet=()=>'<h3 style="font-size:16px">Detalle de parroquia</h3><p class="n" style="margin:6px 0 0">Haz clic en una parroquia del mapa para ver sus cifras, la alerta de la semana y su evolución. El mapa se acerca solo.</p>';
+$('#detMapa').innerHTML=vacioDet();
+$('#segMapa').innerHTML=Object.entries(MET).map(([k,v])=>`<button data-k="${k}" class="${k===met?'on':''}">${v.t}</button>`).join('');
+$('#segMapa').onclick=e=>{const b=e.target.closest('button');if(!b)return;met=b.dataset.k;if(met!=='tiempo')parar();document.querySelectorAll('#segMapa button').forEach(x=>x.classList.toggle('on',x===b));pintaMapa()};
+const sl=$('#slMes');sl.max=MESES.length-1;sl.value=MESES.indexOf('2025-12');
+function parar(){clearInterval(timer);timer=null;$('#btnPlay').textContent='▶ Reproducir'}
+$('#btnPlay').onclick=()=>{if(timer)return parar();if(+sl.value>=+sl.max)sl.value=11;$('#btnPlay').textContent='⏸ Pausar';timer=setInterval(()=>{if(+sl.value>=+sl.max)return parar();sl.value=+sl.value+1;pintaMapa()},380)};
+sl.oninput=pintaMapa;
+const todo=()=>map.flyToBounds(capa.getBounds(),{padding:[30,30],duration:.8});
+$('#btnTodo').onclick=()=>{sel=null;capa.eachLayer(estilo);$('#detMapa').innerHTML=vacioDet();todo()};
+$('#btnFoco').onclick=()=>{const b=L.featureGroup(capa.getLayers().filter(l=>l.feature.properties.foco)).getBounds();map.flyToBounds(b,{padding:[80,80],duration:.9})};
+map.fitBounds(capa.getBounds(),{padding:[30,30]});pintaMapa();
+const area=Object.fromEntries(geo.map(g=>[g.nom,g.area]));
+
+/* ===== TENDENCIA ===== */
+const pars=Object.keys(D.mensual).sort((a,b)=>FOCO.includes(b)-FOCO.includes(a)||a.localeCompare(b));
+$('#selPar').innerHTML=pars.map(p=>`<option value="${p}">${nom(p)}${FOCO.includes(p)?' ★':''}</option>`).join('');
+let modoT='mes',comp=new Set(['RIOBAMBA']);
+const PAL=['#1f6fb2','#e0533a','#3f9d6b','#f0a829','#7d5bbe','#2bb3c0','#c0392b','#8e7f3a','#5a6b7b','#d2691e','#16a085','#b0507a'];
+function roll(arr){return arr.map((_,i)=>i<11?null:arr.slice(i-11,i+1).reduce((a,b)=>a+(b||0),0))}
+async function pintaTend(){
+  const p=$('#selPar').value,T=await api('tendencia',{parroquia:p}),m=T.serie,n=m.mes.length,ic=m.tipo.indexOf('Pronóstico');
+  $('#pillsComp').style.display=modoT==='comp'?'flex':'none';
+  if(modoT==='comp'){
+    $('#pillsComp').innerHTML=pars.map((q,i)=>`<span class="pill ${comp.has(q)?'on':''}" data-q="${q}" ${comp.has(q)?`style="background:${PAL[i]};border-color:${PAL[i]}"`:''}>${nom(q)}</span>`).join('');
+    $('#pillsComp').onclick=e=>{const q=e.target.dataset.q;if(!q)return;comp.has(q)?comp.delete(q):comp.add(q);pintaTend()};
+    const ser=[...comp].map(q=>{const r=roll(D.mensual[q].inc),base=r[MESES.indexOf('2025-12')]||1;return{n:nom(q),c:PAL[pars.indexOf(q)],y:r.map(v=>v==null?null:v/base*100)}});
+    const xs=MESES.map(mesTxt),lab=[];MESES.forEach((s,i)=>{if(s.endsWith('-01'))lab.push([i,s.slice(0,4)])});
+    lineas($('#c-tend'),{x:xs,h:340,xlab:lab,corte:MESES.indexOf('2026-10'),series:ser,yfmt:v=>fmt(v)});
+    $('#c-tend').insertAdjacentHTML('beforeend','<p class="n" style="margin-top:6px">Índice: 100 = delitos de los 12 meses que terminan en dic-2025. Permite comparar parroquias grandes y pequeñas en la misma escala.</p>');
+    $('#modTend').textContent='Comparación';return}
+  if(modoT==='acum'){
+    const r=T.acum12,xs=m.mes.map(mesTxt),lab=[];m.mes.forEach((s,i)=>{if(s.endsWith('-01'))lab.push([i,s.slice(0,4)])});
+    lineas($('#c-tend'),{x:xs,h:340,xlab:lab,corte:ic,series:[{n:'Real (12 meses)',c:'#1f6fb2',y:r.map((v,i)=>m.tipo[i]==='Real'?v:null)},{n:'Pronóstico (12 meses)',c:'#e0533a',dash:1,y:r.map((v,i)=>i>=ic-1?v:null)}],yfmt:v=>fmt(v)});
+    $('#modTend').innerHTML='Suma móvil: quita la estacionalidad';return}
+  const real=m.inc.map((v,i)=>m.tipo[i]==='Real'?v:null),fc=m.inc.map((v,i)=>i>=ic-1?v:null);
+  const xs=m.mes.map(s=>{const[a,b]=s.split('-');return ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'][b-1]+' '+a});
+  const lab=[];m.mes.forEach((s,i)=>{if(s.endsWith('-01')&&s.slice(0,4)%1===0&&(+s.slice(0,4))%1===0&&(i%12===0||s.slice(5)==='01'&&(+s.slice(0,4))%1===0))lab.push([i,s.slice(0,4)])});
+  const hiOk=m.a95.map(v=>v),loOk=m.b95.map(v=>v);
+  lineas($('#c-tend'),{x:xs,h:340,xlab:lab,corte:ic,series:[{n:'Real',c:'#1f6fb2',y:real},{n:'Pronóstico',c:'#e0533a',dash:1,y:fc}],bandas:[{lo:m.b95.map(v=>v==null?null:Math.max(0,v)),hi:m.a95,c:'#e0533a',o:.10},{lo:m.b80.map(v=>v==null?null:Math.max(0,v)),hi:m.a80,c:'#e0533a',o:.18}],yfmt:v=>fmt(v,v<10?1:0)});
+  $('#modTend').innerHTML='Método ganador del backtest: <b>'+(m.modelo||'–')+'</b>';
+  const fil=camb.find(c=>c.parroquia_corta===p);
+  tabla($('#t-anual'),[{t:'Año',k:'a'},{t:'Delitos',r:1,f:r=>fmt(r.v)},{t:'Tipo',f:r=>r.t}],yrs.map(y=>({a:y,v:fil[y],t:+y<=2025?'Real':+y===2026?'Real + pronóstico':'Pronóstico'})));
+}
+$('#selPar').onchange=pintaTend;$('#segTend').onclick=e=>{const b=e.target.closest('button');if(!b)return;modoT=b.dataset.m;document.querySelectorAll('#segTend button').forEach(x=>x.classList.toggle('on',x===b));pintaTend()};pintaTend();
+barras($('#c-cambio'),camb.filter(c=>c['2025']>=5).sort((a,b)=>a.cambio_2025_2029_pct-b.cambio_2025_2029_pct).map(c=>({n:nom(c.parroquia_corta)+` (${c['2025']}→${c['2029']})`,v:Math.abs(c.cambio_2025_2029_pct),c:c.cambio_2025_2029_pct>0?'#e0533a':'#2f86b8'})),{fmtv:v=>fmt(v,1)+' %'});
+$('#c-cambio').insertAdjacentHTML('beforeend','<div class="leg"><span><i style="background:#2f86b8"></i>Baja</span><span><i style="background:#e0533a"></i>Sube</span><span>Solo parroquias con 5 o más delitos en 2025</span></div>');
+
+/* ===== MODELOS ===== */
+const mejor=D.resumen[0],base=D.resumen.find(r=>r.modelo==='Base: semana anterior');
+$('#kmod').innerHTML=[['MAE modelo elegido',fmt(mejor['Todas las parroquias'],2),'por parroquia y semana','var(--verde)'],['Mejora vs semana anterior',fmt((1-mejor['Todas las parroquias']/base['Todas las parroquias'])*100,0)+' %',`${fmt(base['Todas las parroquias'],2)} → ${fmt(mejor['Todas las parroquias'],2)}`,'var(--azul)'],['Riobamba (urbana)',fmt(mejor['Urbana (Riobamba)'],1),'error ≈ 12 % del nivel semanal','var(--cian)'],['Cubijíes / Flores',fmt(mejor['Cubijíes'],2)+' / '+fmt(mejor['Flores'],2),'delitos por semana','var(--ambar)']].map(k=>`<div class="card kpi" style="--c:${k[3]}"><div class="l">${k[0]}</div><div class="v">${k[1]}</div><div class="d">${k[2]}</div></div>`).join('');
+barras($('#c-mae'),D.resumen.map((r,i)=>({n:r.modelo.replace('Combinación','Comb.'),v:r['Todas las parroquias'],c:i===0?'#3f9d6b':r.modelo.startsWith('Base')?'#c5d0da':'#4c93c9'})),{fmtv:v=>fmt(v,2),max:2});
+tabla($('#t-rv'),[{t:'Parroquia',f:r=>nom(r.parroquia_corta)},{t:'Real',r:1,k:'real_total'},{t:'Predicho',r:1,k:'predicho_total'},{t:'MAE',r:1,k:'MAE'}],D.rv);
+tabla($('#t-azar'),[{t:'Parroquia',f:r=>nom(r.parroquia_corta)},{t:'Media semanal',r:1,f:r=>fmt(r.media_semanal,2)},{t:'MAE de un modelo perfecto',r:1,f:r=>fmt(r.MAE_modelo_perfecto,2)},{t:'MAE del modelo',r:1,f:r=>fmt(r.MAE_modelo,2)},{t:'Error relativo',r:1,f:r=>fmt(r.error_relativo_pct,0)+' %'}],D.azar);
+
+/* ===== ABIGEATO ===== */
+const ab=D.abigeato,totAb=ab['Por anio'].reduce((s,r)=>s+r.casos,0),rur=ab['Por parroquia'].filter(r=>r.parroquia_corta!=='RIOBAMBA').reduce((s,r)=>s+r.casos,0);
+$('#kabig').innerHTML=[['Casos registrados',fmt(totAb),'jul-2021 a sep-2026, todos delito explícito','var(--azul)'],['En zonas rurales',fmt(rur/totAb*100,0)+' %','fuera de la zona urbana de Riobamba','var(--verde)'],['Año más alto',ab['Por anio'].reduce((a,b)=>b.casos>a.casos?b:a).anio,'ver gráfico','var(--ambar)']].map(k=>`<div class="card kpi" style="--c:${k[3]}"><div class="l">${k[0]}</div><div class="v">${k[1]}</div><div class="d">${k[2]}</div></div>`).join('');
+columnas($('#a-anio'),ab['Por anio'].map(r=>({n:r.anio,v:r.casos})),{yfmt:v=>fmt(v)});
+columnas($('#a-mes'),ab['Por mes'].map(r=>({n:r.mes,l:r.mes.slice(0,3),v:r.promedio})),{color:'#2bb3c0'});
+barras($('#a-par'),ab['Por parroquia'].map(r=>({n:nom(r.parroquia_corta),v:r.casos})),{color:'#3f9d6b',fmtv:v=>fmt(v)});
+columnas($('#a-dia'),ab['Por dia'].map(r=>({n:r.dia_semana,l:r.dia_semana.slice(0,3),v:r.casos})),{color:'#7d5bbe',yfmt:v=>fmt(v)});
+
+$('#btnTema').onclick=()=>{const d=document.documentElement.dataset.t==='dark';document.documentElement.dataset.t=d?'':'dark';$('#btnTema').textContent=d?'🌙 Modo oscuro':'☀️ Modo claro'};
+$('#nav').addEventListener('click',e=>{const a=e.target.closest('a');if(a&&a.dataset.k==='resumen')contar($('#kpis'));if(a&&a.dataset.k!=='mapa')parar()});
+const h=location.hash.slice(1);if(h&&document.querySelector(`nav a[data-k="${h}"]`))document.querySelector(`nav a[data-k="${h}"]`).click();
+</script>
+</body>
+</html>

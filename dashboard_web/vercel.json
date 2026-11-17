@@ -1,0 +1,5 @@
+{
+  "cleanUrls": true,
+  "functions": { "api/*.js": { "includeFiles": "data/**" } },
+  "headers": [{ "source": "/(.*)", "headers": [{ "key": "X-Robots-Tag", "value": "noindex" }] }]
+}
