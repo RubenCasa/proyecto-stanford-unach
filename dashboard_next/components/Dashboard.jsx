@@ -99,6 +99,38 @@ function Tabla({ cols, rows, onRow }) {
 }
 const Kpi = ({ l, v, d, c, info, n, dec, suf }) => <div className="card kpi" style={{ '--c': c }}><div className="l">{l}{info && <Info t={info} />}</div><div className="v">{n != null ? <Cuenta n={n} dec={dec} suf={suf} /> : v}</div><div className="d">{d}</div></div>;
 
+
+/* Mapa de calor: cada parroquia × las 12 semanas. El color dice cuánto se aleja de lo habitual (100 = igual que el promedio del último año). */
+const colorCalor = (f) => {
+  const { indice: i, alerta, prediccion: pr, media_52_semanas: me } = f;
+  if (alerta === 'Alta') return ['#e0533a', '#fff'];
+  if (alerta === 'Media') return ['#f4b740', '#3b2a00'];
+  const azar = Math.abs(pr - me) < 0.5 * Math.sqrt(Math.max(me, 0.1));   // diferencia dentro del azar: no se pinta
+  if (!azar && i >= 108) return ['#f9dcd5', '#6b2a1c'];
+  if (!azar && i <= 92) return ['#d6e8f6', '#17476b'];
+  return ['#eef2f6', '#4a5d70'];
+};
+function Calor({ pron, sem, setSem, orden, desde }) {
+  const hs = [...new Set(pron.map(p => p.horizonte))].filter(h => h >= desde).sort((a, b) => a - b);
+  const [tip, setTip] = useState(null);
+  return (
+    <div className="card calor">
+      <h3>🔥 Las próximas semanas de un vistazo</h3>
+      <p className="n">Cada cuadro es una parroquia en una semana. <b style={{ color: '#17476b' }}>Azul</b> = menos de lo habitual, <b>gris</b> = normal (o diferencia dentro del azar), <b style={{ color: '#a4452f' }}>rosado</b> = algo más, <b style={{ color: '#e0533a' }}>rojo</b> = alerta. El número es el pronóstico de delitos. Toca una columna para ver esa semana.</p>
+      <div className="calor-wrap">
+        <table>
+          <thead><tr><th />{hs.map(h => { const f = pron.find(p => p.horizonte === h); const w = semana(f.semana_inicio); return <th key={h} className={h === sem ? 'sel' : ''} onClick={() => setSem(h)}>{w.corto.split(' – ')[0]}</th>; })}</tr></thead>
+          <tbody>{orden.map(n => (
+            <tr key={n}><th className="rn">{nom(n)}{(n === 'CUBIJIES' || n === 'FLORES') && ' ★'}</th>
+              {hs.map(h => { const f = pron.find(p => p.horizonte === h && p.parroquia_corta === n); if (!f) return <td key={h} />; const [bg, fg] = colorCalor(f);
+                return <td key={h} className={h === sem ? 'sel' : ''} style={{ background: bg, color: fg }} onClick={() => setSem(h)} onMouseEnter={() => setTip({ n, h, f })} onMouseLeave={() => setTip(null)}>{fmt(f.prediccion, f.prediccion < 10 ? 1 : 0)}</td>; })}
+            </tr>))}</tbody>
+        </table>
+      </div>
+      <div className="calor-tip">{tip ? <><b>{nom(tip.n)}</b> · semana del {semana(tip.f.semana_inicio).corto}: se esperan <b>{fmt(tip.f.prediccion, 1)}</b> delitos (lo habitual es {fmt(tip.f.media_52_semanas, 1)}; índice {fmt(tip.f.indice, 0)}).</> : 'Pasa el cursor por un cuadro para ver el detalle.'}</div>
+    </div>);
+}
+
 export default function Dashboard({ datos: D, pronInicial }) {
   const [sec, setSec] = useState('inicio');
   const [oscuro, setOscuro] = useState(false);
@@ -146,6 +178,7 @@ export default function Dashboard({ datos: D, pronInicial }) {
   const elegir = h => { elegida.current = true; setSem(h); };
   const p1 = useMemo(() => pron.filter(p => p.horizonte === sw.h), [pron, sw]);
   const total = useMemo(() => YRS.map(y => D.cambio.reduce((s, r) => s + (r[y] || 0), 0)), [D]);
+  const orden = useMemo(() => ['CUBIJIES', 'FLORES', ...p1.filter(p => p.parroquia_corta !== 'CUBIJIES' && p.parroquia_corta !== 'FLORES').sort((a, b) => b.media_52_semanas - a.media_52_semanas).map(p => p.parroquia_corta)], [p1]);
   const altas = p1.filter(p => p.alerta === 'Alta');
   const rio = p1.find(p => p.parroquia_corta === 'RIOBAMBA'), cub = p1.find(p => p.parroquia_corta === 'CUBIJIES'), flo = p1.find(p => p.parroquia_corta === 'FLORES');
   const cod1 = D.codigo.find(c => c.codigo_coip === 1), res = D.resumen[0];
@@ -192,6 +225,9 @@ export default function Dashboard({ datos: D, pronInicial }) {
             <p className="n" style={{ margin: '-6px 0 12px' }}>Los datos del ECU 911 llegan hasta el domingo 27 de septiembre de 2026; desde ahí el modelo calcula hacia adelante, así que cuanto más lejana es la semana, más incierto es el pronóstico. Toca una semana y todo el tablero cambia.</p>
             <Semanas semanas={semanas} sem={sem} setSem={elegir} />
             <div className="caritas"><span>🙂 Todo tranquilo</span><span>😐 Atención</span><span>😟 Alerta</span></div>
+
+            <h2 className="h2">🔥 Todo el panorama</h2>
+            <Calor pron={pron} sem={sw.h} setSem={elegir} orden={orden} desde={semanas[0].h} />
 
             <h2 className="h2">★ Las parroquias foco del proyecto</h2>
             <div className="grid g2">
