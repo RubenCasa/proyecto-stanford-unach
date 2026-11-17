@@ -346,6 +346,7 @@ function Pronostico({ D, pron, p1, semanas, sem, setSem, umbral, setUmbral, onPa
 function Tendencia({ D, par, setPar }) {
   const pars = Object.keys(D.mensual).sort((a, b) => FOCO.includes(b) - FOCO.includes(a) || a.localeCompare(b));
   const p = par || 'CUBIJIES';
+  const [patron, setPatron] = useState(false);
   const [modo, setModo] = useState('mes'), [comp, setComp] = useState(['RIOBAMBA', 'CALPI', 'LICAN']), [T, setT] = useState(null);
   const meses = D.mensual.RIOBAMBA.mes;
   useEffect(() => { let v = true; api('tendencia', { parroquia: p }, D).then(r => v && setT(r.data)); return () => { v = false; }; }, [p, D]);
@@ -357,7 +358,8 @@ function Tendencia({ D, par, setPar }) {
     const m = T.serie, ic = m.tipo.indexOf('Pronóstico'), x = m.mes.map(mesTxt);
     grafico = modo === 'mes'
       ? <LineChart h={340} x={x} xlab={lab} corte={ic} yfmt={v => fmt(v, v < 10 ? 1 : 0)}
-          series={[{ n: 'Real', c: '#1f6fb2', y: m.inc.map((v, i) => (m.tipo[i] === 'Real' ? v : null)) }, { n: 'Pronóstico', c: '#e0533a', dash: 1, y: m.inc.map((v, i) => (i >= ic - 1 ? v : null)) }]}
+          series={[{ n: 'Real', c: '#1f6fb2', y: m.inc.map((v, i) => (m.tipo[i] === 'Real' ? v : null)) }, { n: 'Pronóstico', c: '#e0533a', dash: 1, y: m.inc.map((v, i) => (i >= ic - 1 ? v : null)) },
+            ...(patron ? [{ n: 'Patrón histórico por mes (referencia)', c: '#7a5af8', dash: 1, y: m.mes.map((ms, i) => { if (i < ic - 1) return null; const mm = ms.slice(5), r = m.mes.map((q, j) => (q.slice(5) === mm && m.tipo[j] === 'Real' ? m.inc[j] : null)).filter(v => v != null); return r.length ? r.reduce((a, b) => a + b, 0) / r.length : null; }) }] : [])]}
           bands={[{ lo: m.b95, hi: m.a95, c: '#e0533a', o: 0.1 }, { lo: m.b80, hi: m.a80, c: '#e0533a', o: 0.18 }]} />
       : <LineChart h={340} x={x} xlab={lab} corte={ic} series={[{ n: 'Real (12 meses)', c: '#1f6fb2', y: T.acum12.map((v, i) => (m.tipo[i] === 'Real' ? v : null)) }, { n: 'Pronóstico (12 meses)', c: '#e0533a', dash: 1, y: T.acum12.map((v, i) => (i >= ic - 1 ? v : null)) }]} />;
   }
@@ -378,13 +380,14 @@ function Tendencia({ D, par, setPar }) {
         <div className="row"><h3 style={{ margin: 0 }}>Tendencia mensual hasta 2029</h3>
           <select value={p} onChange={e => setPar(e.target.value)}>{pars.map(q => <option key={q} value={q}>{nom(q)}{FOCO.includes(q) ? ' ★' : ''}</option>)}</select>
           <div className="seg">{[['mes', 'Mensual'], ['acum', 'Últimos 12 meses'], ['comp', 'Comparar']].map(([k, t]) => <button key={k} className={modo === k ? 'on' : ''} onClick={() => setModo(k)}>{t}</button>)}</div>
+          {T && modo === 'mes' && <label className="chip" style={{ cursor: 'pointer' }}><input type="checkbox" checked={patron} onChange={e => setPatron(e.target.checked)} /> Ver patrón por mes (referencia)</label>}
           {T && modo !== 'comp' && <span className="chip">Método ganador: <b>{T.serie.modelo}</b></span>}</div>
         {modo === 'comp' && <div className="pills">{pars.map(q => { const on = comp.includes(q); return <span key={q} className={`pill ${on ? 'on' : ''}`} style={on ? { background: PAL[pars.indexOf(q)], borderColor: PAL[pars.indexOf(q)] } : null} onClick={() => setComp(on ? comp.filter(z => z !== q) : [...comp, q])}>{nom(q)}</span>; })}</div>}
         <p className="n" style={{ marginTop: 10 }}>{modo === 'mes' ? 'Línea sólida = datos reales; punteada = pronóstico; bandas = rango probable al 80 % y 95 %. Con pocos casos las bandas son amplias: es lo honesto.' : modo === 'acum' ? 'Suma móvil de 12 meses: quita la estacionalidad y muestra la tendencia.' : 'Índice: 100 = delitos de los 12 meses que terminan en dic-2025. Permite comparar parroquias grandes y pequeñas.'}</p>
         {grafico || <p className="n">Cargando…</p>}
         {modo === 'mes' && T && !/mes del año/i.test(T.serie.modelo) && (() => {
           const z = D.backtest.filter(b => b.zona === (par === 'RIOBAMBA' ? 'Urbana' : 'Rurales')), g = z.find(b => b.modelo === T.serie.modelo), e = z.find(b => /mes del año/i.test(b.modelo));
-          return <div className="aviso" style={{ marginTop: 12 }}>💡 <b>¿Por qué el pronóstico sale recto y antes tenía curvas?</b> Las curvas venían de un modelo que repite el patrón de cada mes. En las parroquias con pocos delitos ese patrón es casi puro azar (un mes con 4 casos no significa que se repita). Lo probamos con los últimos 24 meses: {g && e ? <>el modelo recto se equivocó <b>{fmt(g.MAE_mensual, 2)}</b> delitos por mes y el de curvas <b>{fmt(e.MAE_mensual, 2)}</b>, así que el recto acierta más.</> : 'el modelo recto acertó más.'} Por eso se usa la línea recta: es el nivel normal esperado, y la zona sombreada muestra que cualquier mes puede salir más alto o más bajo.</div>;
+          return <div className="aviso" style={{ marginTop: 12 }}>💡 <b>¿Por qué el pronóstico sale recto y antes tenía curvas?</b> Las curvas venían de un modelo que repite el patrón de cada mes. En las parroquias con pocos delitos ese patrón es casi puro azar (un mes con 4 casos no significa que se repita). Lo probamos con los últimos 24 meses: {g && e ? <>el modelo recto se equivocó <b>{fmt(g.MAE_mensual, 2)}</b> delitos por mes y el de curvas <b>{fmt(e.MAE_mensual, 2)}</b>, así que el recto acierta más.</> : 'el modelo recto acertó más.'} Por eso se usa la línea recta: es el nivel normal esperado. Si quieres ver cómo sería con curvas, activa «Ver patrón por mes (referencia)» (línea morada), sabiendo que acierta menos. La zona sombreada muestra que cualquier mes puede salir más alto o más bajo.</div>;
         })()}
         {modo !== 'mes' && <div className="aviso" style={{ marginTop: 12 }}>💡 <b>¿Por qué después de 2027 se ve casi recta?</b> Lejos en el tiempo el modelo solo puede proyectar el nivel normal de cada mes y una tendencia suave; los picos y valles del pasado no se pueden adivinar. Además, al sumar 12 meses se cancelan las diferencias entre meses. Recta no significa «no cambiará»: significa «no hay señal clara». Las sombras muestran cómo crece la incertidumbre.</div>}
         {T && modo !== 'comp' && (() => {
