@@ -122,7 +122,7 @@ export default function MapaVivo({ datos: D, pron1, mat, sel, onSel, onTendencia
   const ult = ser ? ser.mes.map((_, i) => i).filter(i => ser.mes[i] >= '2023-01') : [];
   const ip = ser ? ser.tipo.indexOf('Pronóstico') : 0;
   const ranking = Object.keys(D.mensual).map(n => ({ n, d: m.d(n) })).filter(x => x.d).sort((a, b) => m.ord(b.d) - m.ord(a.d));
-  const [rt, rc] = p ? riesgoTxt(p.prob_al_menos_1) : ['', ''];
+  const rt = p ? riesgoTxt(p.prob_al_menos_1)[0] : '', rc = p ? { Normal: '#3f9d6b', Media: '#d08a00', Alta: '#e0533a' }[p.alerta] : '';
 
   return (
     <div className="mapwrap">
@@ -164,7 +164,7 @@ export default function MapaVivo({ datos: D, pron1, mat, sel, onSel, onTendencia
           <p className="n" style={{ margin: '2px 0 10px' }}>{fmt(g.area, 1)} km² · {g.foco ? 'Parroquia foco del proyecto' : 'Parroquia'}</p>
           <div className="veredicto" style={{ borderColor: rc }}>
             <div className="mini">ESTA SEMANA</div>
-            <div style={{ fontSize: 17, fontWeight: 700, color: rc }}>Es {rt} que ocurra un delito</div>
+            <div style={{ fontSize: 17, fontWeight: 700 }}>Es {rt} que ocurra un delito</div>
             <div className="n" style={{ margin: '2px 0 0' }}>Probabilidad de al menos uno: <b>{p.prob_al_menos_1} %</b> · Predicción {fmt(p.prediccion, 1)} (rango {fmt(p.rango_bajo, 1)}–{fmt(p.rango_alto, 1)})</div>
             <div style={{ marginTop: 6 }}><span className={`badge b-${p.alerta}`}>Alerta {p.alerta.toLowerCase()}</span></div>
           </div>
