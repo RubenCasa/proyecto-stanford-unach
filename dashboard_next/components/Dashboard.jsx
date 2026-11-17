@@ -327,7 +327,13 @@ function Tendencia({ D, par, setPar }) {
   }
   if (modo === 'comp') {
     const b = meses.indexOf('2025-12');
-    grafico = <LineChart h={340} x={meses.map(mesTxt)} xlab={lab} corte={meses.indexOf('2026-10')} series={comp.map(q => { const r = roll(D.mensual[q].inc); return { n: nom(q), c: PAL[pars.indexOf(q)], y: r.map(v => (v == null ? null : (v / (r[b] || 1)) * 100)) }; })} />;
+    /* banda al 80 %: el error de los meses pronosticados dentro de cada ventana de 12 meses se combina como independiente (raíz de la suma de cuadrados) */
+    const banda = q => { const M = D.mensual[q], r = roll(M.inc), esc = b => (r[b] || 1);
+      const w = M.inc.map((_, i) => (i < 11 ? null : Math.sqrt(M.inc.slice(i - 11, i + 1).reduce((t, v, k) => { const j = i - 11 + k; return t + (M.tipo[j] === 'Pronóstico' && M.a80[j] != null ? (M.a80[j] - v) ** 2 : 0); }, 0))));
+      return { lo: r.map((v, i) => (v == null ? null : Math.max(0, v - w[i]) / esc(b) * 100)), hi: r.map((v, i) => (v == null ? null : (v + w[i]) / esc(b) * 100)) }; };
+    grafico = <LineChart h={340} x={meses.map(mesTxt)} xlab={lab} corte={meses.indexOf('2026-10')}
+      bands={comp.map(q => ({ ...banda(q), c: PAL[pars.indexOf(q)], o: 0.13 }))}
+      series={comp.map(q => { const r = roll(D.mensual[q].inc); return { n: nom(q), c: PAL[pars.indexOf(q)], y: r.map(v => (v == null ? null : (v / (r[b] || 1)) * 100)) }; })} />;
   }
   return (
     <section>
@@ -340,6 +346,7 @@ function Tendencia({ D, par, setPar }) {
         {modo === 'comp' && <div className="pills">{pars.map(q => { const on = comp.includes(q); return <span key={q} className={`pill ${on ? 'on' : ''}`} style={on ? { background: PAL[pars.indexOf(q)], borderColor: PAL[pars.indexOf(q)] } : null} onClick={() => setComp(on ? comp.filter(z => z !== q) : [...comp, q])}>{nom(q)}</span>; })}</div>}
         <p className="n" style={{ marginTop: 10 }}>{modo === 'mes' ? 'Línea sólida = datos reales; punteada = pronóstico; bandas = rango probable al 80 % y 95 %. Con pocos casos las bandas son amplias: es lo honesto.' : modo === 'acum' ? 'Suma móvil de 12 meses: quita la estacionalidad y muestra la tendencia.' : 'Índice: 100 = delitos de los 12 meses que terminan en dic-2025. Permite comparar parroquias grandes y pequeñas.'}</p>
         {grafico || <p className="n">Cargando…</p>}
+        {modo !== 'mes' && <div className="aviso" style={{ marginTop: 12 }}>💡 <b>¿Por qué después de 2027 se ve casi recta?</b> Lejos en el tiempo el modelo solo puede proyectar el nivel normal de cada mes y una tendencia suave; los picos y valles del pasado no se pueden adivinar. Además, al sumar 12 meses se cancelan las diferencias entre meses. Recta no significa «no cambiará»: significa «no hay señal clara». Las sombras muestran cómo crece la incertidumbre.</div>}
         {T && modo !== 'comp' && (() => {
           const m = T.serie, por = Array(12).fill(0), cnt = Array(12).fill(0);
           m.mes.forEach((s, i) => { if (m.tipo[i] === 'Real') { por[+s.slice(5) - 1] += m.inc[i] || 0; cnt[+s.slice(5) - 1] += 1; } });
