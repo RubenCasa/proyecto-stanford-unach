@@ -15,13 +15,13 @@ const TILES = {
 const BASES = [['calles', 'Calles'], ['claro', 'Claro'], ['oscuro', 'Oscuro'], ['sat', 'Satélite']];
 const DESC = {
   tiempo: 'Cuántos delitos hubo en cada parroquia en los 12 meses que terminan en la fecha elegida. Más oscuro = más delitos por km².',
-  alerta: 'Semáforo de esta semana: verde = normal, amarillo = atención, rojo = alerta (se espera más de lo habitual).',
+  alerta: 'Semáforo de la semana elegida: verde 🙂 = normal, amarillo 😐 = atención, rojo 😟 = alerta (se espera más de lo habitual).',
   cambio: 'Cómo cambiarán los delitos de 2025 a 2029. Rojo = sube, azul = baja.',
   total: 'Total de delitos registrados en 2025 en cada parroquia.',
 };
 const riesgoTxt = p => (p < 20 ? ['poco probable', '#3f9d6b'] : p < 60 ? ['posible', '#d08a00'] : ['muy probable', '#e0533a']);
 
-export default function MapaVivo({ datos: D, pron1, mat, sel, onSel, onTendencia, dark }) {
+export default function MapaVivo({ datos: D, pron1, semanas, sem, setSem, mat, sel, onSel, onTendencia, dark }) {
   const el = useRef(null), R = useRef({});          // R: leaflet, mapa, capa, base
   const [listo, setListo] = useState(false);
   const [met, setMet] = useState('tiempo');
@@ -134,6 +134,8 @@ export default function MapaVivo({ datos: D, pron1, mat, sel, onSel, onTendencia
         <h3 style={{ fontSize: 15, marginBottom: 8 }}>1 · Elige qué ver</h3>
         <div className="seg" style={{ display: 'flex', flexWrap: 'wrap' }}>{Object.entries(METS).map(([k, v]) => <button key={k} className={met === k ? 'on' : ''} onClick={() => { setMet(k); if (k !== 'tiempo') setPlay(false); }}>{v.t}</button>)}</div>
         <p className="n" style={{ margin: '8px 0 0' }}>{DESC[met]}</p>
+        {met === 'alerta' && (<div style={{ marginTop: 10 }}><div className="mini" style={{ marginBottom: 4 }}>SEMANA</div>
+          <div className="seg" style={{ display: 'flex', flexWrap: 'wrap' }}>{semanas.map(w => <button key={w.h} className={sem === w.h ? 'on' : ''} onClick={() => setSem(w.h)}>{w.cara.e} {w.corto}</button>)}</div></div>)}
         {met === 'tiempo' && (
           <div style={{ marginTop: 12 }}>
             <div className="row" style={{ marginBottom: 2 }}><button className="btn" onClick={() => { if (!play && mi >= meses.length - 1) setMi(11); setPlay(!play); }}>{play ? '⏸ Pausar' : '▶ Reproducir'}</button><span className="big" style={{ fontSize: 22 }}>{mesTxt(meses[mi])}</span></div>
@@ -156,15 +158,15 @@ export default function MapaVivo({ datos: D, pron1, mat, sel, onSel, onTendencia
           <ol className="lista" style={{ margin: '8px 0 0', paddingLeft: 18 }}>
             <li>Elige una <b>capa</b> arriba a la izquierda.</li>
             <li><b>Toca una parroquia</b> en el mapa o en la lista.</li>
-            <li>Aquí verás qué tan probable es un delito esta semana y cómo evoluciona.</li>
+            <li>Aquí verás qué tan probable es un delito en la semana elegida y cómo evoluciona.</li>
           </ol>
           <p className="n" style={{ margin: '10px 0 0' }}>Los colores solo comparan parroquias entre sí: son una guía para priorizar, no una certeza. Cambia el fondo (Calles, Claro, Oscuro, Satélite) arriba.</p>
         </>) : (<>
           <div className="row" style={{ justifyContent: 'space-between', margin: 0 }}><h3 style={{ fontSize: 18, margin: 0 }}>{nom(sel)}{g.foco ? ' ★' : ''}</h3><button className="btn sec" style={{ padding: '4px 10px' }} onClick={() => onSel(null)} aria-label="Cerrar">✕</button></div>
           <p className="n" style={{ margin: '2px 0 10px' }}>{fmt(g.area, 1)} km² · {g.foco ? 'Parroquia foco del proyecto' : 'Parroquia'}</p>
           <div className="veredicto" style={{ borderColor: rc }}>
-            <div className="mini">ESTA SEMANA</div>
-            <div style={{ fontSize: 17, fontWeight: 700 }}>Es {rt} que ocurra un delito</div>
+            <div className="mini">SEMANA {semanas[sem - 1].corto.toUpperCase()}</div>
+            <div style={{ fontSize: 17, fontWeight: 700 }}>En esa semana es {rt} que ocurra un delito</div>
             <div className="n" style={{ margin: '2px 0 0' }}>Probabilidad de al menos uno: <b>{p.prob_al_menos_1} %</b> · Predicción {fmt(p.prediccion, 1)} (rango {fmt(p.rango_bajo, 1)}–{fmt(p.rango_alto, 1)})</div>
             <div style={{ marginTop: 6 }}><span className={`badge b-${p.alerta}`}>Alerta {p.alerta.toLowerCase()}</span></div>
           </div>

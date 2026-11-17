@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { Barras, Columnas, LineChart } from './Charts';
 import { api } from '../lib/api';
-import { COL, FOCO, PAL, fmt, mesTxt, nom } from '../lib/util';
+import { COL, FOCO, PAL, carita, fmt, mesTxt, nom, semana } from '../lib/util';
 
 const MapaVivo = dynamic(() => import('./MapaVivo'), { ssr: false, loading: () => <div className="card" style={{ height: 500, display: 'grid', placeItems: 'center' }}>Cargando mapa…</div> });
 
@@ -73,6 +73,21 @@ function Tour({ cerrar }) {
   );
 }
 
+/* Selector de semanas: fechas claras + carita + frase simple */
+function Semanas({ semanas, sem, setSem, compacto }) {
+  return (
+    <div className={`semanas ${compacto ? 'compacto' : ''}`}>
+      {semanas.map(w => (
+        <button key={w.h} className={sem === w.h ? 'on' : ''} onClick={() => setSem(w.h)} style={sem === w.h ? { borderColor: w.cara.c } : null}>
+          <span className="sn">Semana {w.h}{w.h === 1 ? ' · la primera' : ''}</span>
+          <b className="sf">{w.corto}</b>
+          <span className="sc">{w.cara.e}</span>
+          <span className="st" style={{ color: w.cara.c }}>{w.cara.t}</span>
+          {!compacto && <span className="sd">Se esperan unos <b>{fmt(w.total)}</b> delitos en todo el cantón</span>}
+        </button>))}
+    </div>
+  );
+}
 const Guia = ({ e, children }) => <div className="guia"><b className="e">{e}</b><div>{children}</div></div>;
 const Info = ({ t }) => <span className="info" data-tip={t} tabIndex={0}>i</span>;
 
@@ -94,6 +109,7 @@ export default function Dashboard({ datos: D, pronInicial }) {
   const [fuente, setFuente] = useState('…');
   const [paleta, setPaleta] = useState(false);
   const [tour, setTour] = useState(true);
+  const [sem, setSem] = useState(1);            // semana elegida (1 a 4 después del último dato)
 
   /* datos que vienen de la API */
   useEffect(() => { api('mapa', {}, D).then(r => { setMat(r.data); setFuente(r.fuente); }); }, [D]);
@@ -107,7 +123,12 @@ export default function Dashboard({ datos: D, pronInicial }) {
     window.addEventListener('keydown', f); return () => window.removeEventListener('keydown', f);
   }, []);
 
-  const p1 = useMemo(() => pron.filter(p => p.horizonte === 1), [pron]);
+  const semanas = useMemo(() => [1, 2, 3, 4].map(h => {
+    const filas = pron.filter(p => p.horizonte === h);
+    return { h, ...semana(filas[0].semana_inicio), cara: carita(filas), total: filas.reduce((s, p) => s + p.prediccion, 0) };
+  }), [pron]);
+  const sw = semanas[sem - 1];
+  const p1 = useMemo(() => pron.filter(p => p.horizonte === sem), [pron, sem]);
   const total = useMemo(() => YRS.map(y => D.cambio.reduce((s, r) => s + (r[y] || 0), 0)), [D]);
   const altas = p1.filter(p => p.alerta === 'Alta');
   const rio = p1.find(p => p.parroquia_corta === 'RIOBAMBA'), cub = p1.find(p => p.parroquia_corta === 'CUBIJIES'), flo = p1.find(p => p.parroquia_corta === 'FLORES');
@@ -139,17 +160,22 @@ export default function Dashboard({ datos: D, pronInicial }) {
               <div className="card hero story">
                 <h3>📌 En una frase</h3>
                 <p>
-                  La próxima semana se esperan unos <b>{fmt(rio.prediccion)}</b> delitos en Riobamba. {altas.length ? <>Hay alerta alta en <b>{altas.map(a => nom(a.parroquia_corta)).join(' y ')}</b>.</> : <>No hay parroquias en alerta alta.</>} Hacia 2029 se espera un cantón <b>{total[7] < total[3] ? 'ligeramente a la baja' : 'estable o al alza'}</b>: {fmt(total[3])} delitos en 2025 → {fmt(total[7])} en 2029.
+                  <b>{sw.largo.charAt(0).toUpperCase() + sw.largo.slice(1)}</b> se esperan unos <b>{fmt(rio.prediccion)}</b> delitos en Riobamba. {altas.length ? <>Hay alerta alta en <b>{altas.map(a => nom(a.parroquia_corta)).join(' y ')}</b>.</> : <>No hay parroquias en alerta alta.</>} Hacia 2029 se espera un cantón <b>{total[7] < total[3] ? 'ligeramente a la baja' : 'estable o al alza'}</b>: {fmt(total[3])} delitos en 2025 → {fmt(total[7])} en 2029.
                 </p>
-                <div className="top3"><div className="mini" style={{ color: '#9db8cc' }}>PARROQUIAS A VIGILAR ESTA SEMANA</div>
+                <div className="top3"><div className="mini" style={{ color: '#9db8cc' }}>PARROQUIAS A VIGILAR EN ESA SEMANA</div>
                   {p1.slice().sort((a, b) => b.indice - a.indice).slice(0, 3).map(p => <button key={p.parroquia_corta} onClick={() => verParroquia(p.parroquia_corta)}><i style={{ background: COL[p.alerta] }} /><span>{nom(p.parroquia_corta)}</span><b>{p.indice > 100 ? '▲' : '▼'} {Math.abs(p.indice - 100)} % vs lo habitual</b></button>)}</div>
                 <div className="row" style={{ marginTop: 16 }}>
                   <button className="btn light" onClick={() => ir('mapa')}>🗺️ Abrir el mapa</button>
                   <button className="btn ghost" onClick={() => ir('pron')}>🚨 Ver alertas</button>
                 </div>
               </div>
-              <div className="card"><h3>Mapa rápido · alertas esta semana</h3><MiniMapa D={D} p1={p1} onSel={verParroquia} /></div>
+              <div className="card"><h3>Mapa rápido · semana {sw.corto}</h3><MiniMapa D={D} p1={p1} onSel={verParroquia} /></div>
             </div>
+
+            <h2 className="h2">📅 ¿Qué semana quieres ver?</h2>
+            <p className="n" style={{ margin: '-6px 0 12px' }}>Los datos llegan hasta el domingo 27 de septiembre de 2026. Estas son las 4 semanas siguientes. Toca una y todo el tablero cambia a esa semana.</p>
+            <Semanas semanas={semanas} sem={sem} setSem={setSem} />
+            <div className="caritas"><span>🙂 Todo tranquilo</span><span>😐 Atención</span><span>😟 Alerta</span></div>
 
             <h2 className="h2">★ Las parroquias foco del proyecto</h2>
             <div className="grid g2">
@@ -158,7 +184,7 @@ export default function Dashboard({ datos: D, pronInicial }) {
                   <Medidor pct={p.prob_al_menos_1} />
                   <div style={{ flex: 1 }}>
                     <div className="row" style={{ margin: 0, justifyContent: 'space-between' }}><h3 style={{ margin: 0, fontSize: 20 }}>{nom(p.parroquia_corta)}</h3><Badge a={lv === 'Normal' ? 'Normal' : lv} /></div>
-                    <p style={{ margin: '6px 0', fontSize: 15, lineHeight: 1.5 }}>Esta semana es <b>{t}</b> que ocurra un delito.</p>
+                    <p style={{ margin: '6px 0', fontSize: 15, lineHeight: 1.5 }}>En esa semana es <b>{t}</b> que ocurra un delito.</p>
                     <p className="n" style={{ margin: 0 }}>En 2025 hubo <b>{c['2025']}</b> delitos; hacia 2029 se esperan <b>{c['2029']}</b> ({c.cambio_2025_2029_pct > 0 ? '+' : ''}{c.cambio_2025_2029_pct} %).</p>
                     <p className="n" style={{ margin: '6px 0 0', color: 'var(--azul)' }}>Ver en el mapa →</p>
                   </div>
@@ -167,7 +193,7 @@ export default function Dashboard({ datos: D, pronInicial }) {
 
             <h2 className="h2">¿Qué quieres saber?</h2>
             <div className="grid g4">
-              {[['🗺️', '¿Dónde hay más riesgo?', 'Mapa real con alertas por parroquia', 'mapa'], ['🚨', '¿Qué pasa esta semana?', 'Alertas y delitos esperados', 'pron'], ['🔮', '¿Cómo será 2029?', 'Tendencia con rangos de confianza', 'tend'], ['✅', '¿Qué tan confiable es?', 'Qué tanto acierta el modelo', 'modelos']].map(([e, t, d, k]) => (
+              {[['🗺️', '¿Dónde hay más riesgo?', 'Mapa real con alertas por parroquia', 'mapa'], ['🚨', '¿Qué pasa en cada semana?', 'Qué se espera y dónde hay alerta', 'pron'], ['🔮', '¿Cómo será 2029?', 'Tendencia con rangos de confianza', 'tend'], ['✅', '¿Qué tan confiable es?', 'Qué tanto acierta el modelo', 'modelos']].map(([e, t, d, k]) => (
                 <button key={k} className="card tile" onClick={() => ir(k)}><span className="emo">{e}</span><b>{t}</b><span>{d}</span></button>))}
             </div>
 
@@ -175,7 +201,7 @@ export default function Dashboard({ datos: D, pronInicial }) {
             <div className="grid g4">
               <Kpi l="Delitos explícitos (COIP)" n={cod1.registros} d={`${cod1.pct} % de los registros del ECU 911`} c="var(--azul)" info="Delitos claros según el catálogo COIP de Sonia Calle (código 1). Es lo que predice el modelo." />
               <Kpi l="Delitos en 2025" n={total[3]} d={`2029: ${fmt(total[7])} (${fmt((total[7] / total[3] - 1) * 100, 1)} %)`} c="var(--cian)" />
-              <Kpi l="Alertas altas esta semana" n={altas.length} d={altas.length ? altas.map(a => nom(a.parroquia_corta)).join(', ') : 'ninguna'} c="var(--rojo)" info="Alta = el pronóstico supera el promedio de las últimas 52 semanas en el porcentaje que elijas en «Alertas y pronóstico»." />
+              <Kpi l="Alertas altas en esa semana" n={altas.length} d={altas.length ? altas.map(a => nom(a.parroquia_corta)).join(', ') : 'ninguna'} c="var(--rojo)" info="Alta = el pronóstico supera el promedio de las últimas 52 semanas en el porcentaje que elijas en «Alertas y pronóstico»." />
               <Kpi l="Error del modelo" n={res['Todas las parroquias']} dec={2} d="delitos por semana y parroquia" c="var(--verde)" info="MAE: cuántos delitos se equivoca el modelo, en promedio, por parroquia y semana." />
             </div>
             <div className="grid g21" style={{ marginTop: 16 }}>
@@ -187,9 +213,9 @@ export default function Dashboard({ datos: D, pronInicial }) {
             </div>
           </section>)}
 
-        {sec === 'mapa' && (mat ? <MapaVivo datos={D} pron1={p1} mat={mat} sel={par} onSel={setPar} onTendencia={n => { setPar(n); ir('tend'); }} dark={oscuro} /> : <div className="card">Cargando mapa…</div>)}
+        {sec === 'mapa' && (mat ? <MapaVivo datos={D} pron1={p1} semanas={semanas} sem={sem} setSem={setSem} mat={mat} sel={par} onSel={setPar} onTendencia={n => { setPar(n); ir('tend'); }} dark={oscuro} /> : <div className="card">Cargando mapa…</div>)}
 
-        {sec === 'pron' && <Pronostico D={D} pron={pron} p1={p1} umbral={umbral} setUmbral={setUmbral} onParroquia={verParroquia} />}
+        {sec === 'pron' && <Pronostico D={D} pron={pron} p1={p1} semanas={semanas} sem={sem} setSem={setSem} umbral={umbral} setUmbral={setUmbral} onParroquia={verParroquia} />}
         {sec === 'tend' && <Tendencia D={D} par={par} setPar={setPar} />}
         {sec === 'modelos' && <Modelos D={D} />}
         {sec === 'abig' && <Abigeato D={D} />}
@@ -217,15 +243,19 @@ function Paleta({ D, cerrar, ir, verParroquia }) {
 }
 
 /* ---------- Alertas y pronóstico ---------- */
-function Pronostico({ D, pron, p1, umbral, setUmbral, onParroquia }) {
-  const [h, setH] = useState(1), [q, setQ] = useState(''), [ord, setOrd] = useState(['indice', -1]);
+function Pronostico({ D, pron, p1, semanas, sem, setSem, umbral, setUmbral, onParroquia }) {
+  const h = sem, setH = setSem;
+  const [q, setQ] = useState(''), [ord, setOrd] = useState(['indice', -1]);
   const sems = [...new Set(D.pron.map(p => p.semana_inicio))].sort();
   const filas = pron.filter(p => p.horizonte === h && nom(p.parroquia_corta).toLowerCase().includes(q.toLowerCase())).sort((a, b) => ord[1] * (typeof a[ord[0]] === 'string' ? a[ord[0]].localeCompare(b[ord[0]]) : a[ord[0]] - b[ord[0]]));
   const o = k => () => setOrd(ord[0] === k ? [k, -ord[1]] : [k, -1]);
   const csv = () => { const c = 'parroquia,semana_inicio,prediccion,rango_bajo,rango_alto,prom_52_sem,prob_al_menos_1,indice,alerta\n' + filas.map(r => [r.parroquia_corta, r.semana_inicio, r.prediccion, r.rango_bajo, r.rango_alto, r.media_52_semanas, r.prob_al_menos_1, r.indice, r.alerta].join(',')).join('\n'); const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([c], { type: 'text/csv' })); a.download = 'pronostico_stanford.csv'; a.click(); };
   return (
     <section>
-      <Guia e="🚦"><b>Qué estás viendo:</b> cuántos delitos se esperan la próxima semana en cada parroquia. <b>Rojo</b> = se espera bastante más de lo habitual, <b>amarillo</b> = atención, <b>verde</b> = normal. Toca una tarjeta para verla en el mapa.</Guia>
+      <Guia e="🚦"><b>Qué estás viendo:</b> cuántos delitos se esperan en cada parroquia en la semana que elijas. <b>Rojo</b> 😟 = se espera bastante más de lo habitual, <b>amarillo</b> 😐 = atención, <b>verde</b> 🙂 = tranquilo. Toca una tarjeta para verla en el mapa.</Guia>
+      <h2 className="h2" style={{ marginTop: 0 }}>📅 Elige la semana</h2>
+      <Semanas semanas={semanas} sem={sem} setSem={setSem} />
+      <h2 className="h2">Parroquia por parroquia · semana {semanas[sem - 1].corto}</h2>
       <div className="card" style={{ marginBottom: 16 }}>
         <div className="row" style={{ margin: 0, justifyContent: 'space-between' }}>
           <div style={{ flex: 1, minWidth: 260 }}><h3>¿Qué tan sensible quieres la alerta?<Info t="Índice = pronóstico / promedio de las últimas 52 semanas × 100. Alerta Alta si el índice supera 100 + el porcentaje elegido." /></h3>
@@ -241,14 +271,14 @@ function Pronostico({ D, pron, p1, umbral, setUmbral, onParroquia }) {
               <Medidor pct={p.prob_al_menos_1} size={120} />
               <div><div className="num" style={{ fontSize: 30 }}>{fmt(p.prediccion, p.prediccion < 10 ? 1 : 0)}</div><div className="n" style={{ margin: 0 }}>delitos esperados<br />(entre {fmt(p.rango_bajo, 0)} y {fmt(p.rango_alto, 0)})</div></div>
             </div>
-            <div className="n" style={{ margin: '4px 0 0' }}>Es <b>{t}</b> que ocurra al menos uno esta semana.</div>
+            <div className="n" style={{ margin: '4px 0 0' }}>{{ Normal: '🙂', Media: '😐', Alta: '😟' }[p.alerta]} En esa semana es <b>{t}</b> que ocurra al menos uno.</div>
             <div className="n" style={{ margin: '8px 0 0', display: 'flex', justifyContent: 'space-between' }}><span>Comparado con lo habitual</span><b style={{ color: p.indice > 100 ? '#e0533a' : '#3f9d6b' }}>{p.indice > 100 ? '▲' : '▼'} {Math.abs(p.indice - 100)} %</b></div>
             <div className="n" style={{ margin: '6px 0 0', color: 'var(--azul)' }}>Ver en el mapa →</div>
           </button>); })}
       </div>
       <div className="card" style={{ marginTop: 16 }}>
-        <h3>Detalle: próximas 4 semanas</h3>
-        <div className="row"><select value={h} onChange={e => setH(+e.target.value)}>{sems.map((s, i) => <option key={s} value={i + 1}>Semana {i + 1}: desde {new Date(s + 'T12:00').toLocaleDateString('es-EC', { day: 'numeric', month: 'short', year: 'numeric' })}</option>)}</select>
+        <h3>Detalle de la semana elegida</h3>
+        <div className="row"><select value={h} onChange={e => setH(+e.target.value)}>{semanas.map(w => <option key={w.h} value={w.h}>Semana {w.h}: {w.corto} {w.anio}</option>)}</select>
           <input type="search" value={q} onChange={e => setQ(e.target.value)} placeholder="Buscar parroquia…" /><button className="btn sec" onClick={csv}>Descargar CSV</button></div>
         <Tabla onRow={r => onParroquia(r.parroquia_corta)} rows={filas} cols={[
           { t: 'Parroquia', o: o('parroquia_corta'), f: r => nom(r.parroquia_corta) + (r.zona_foco ? ' ★' : '') }, { t: 'Predicción', r: 1, o: o('prediccion'), f: r => fmt(r.prediccion, 1) },
