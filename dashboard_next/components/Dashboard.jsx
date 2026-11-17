@@ -225,7 +225,7 @@ export default function Dashboard({ datos: D, pronInicial }) {
                 <LineChart h={260} x={YRS} xlab={YRS.map((y, i) => [i, y])} corte={4} series={[{ n: 'Delitos', c: '#1f6fb2', y: total.map((v, i) => (i < 4 ? v : null)) }, { n: 'Pronóstico', c: '#e0533a', dash: 1, y: total.map((v, i) => (i >= 3 ? v : null)) }]} /></div>
               <div className="card"><h3>¿Qué cuenta como delito aquí?</h3><p className="n">Clasificación COIP de Sonia Calle sobre todos los registros del ECU 911.</p>
                 <Barras items={D.codigo.map(c => ({ n: c.significado, v: c.registros, c: ['#c5d0da', '#1f6fb2', '#f0a829', '#9fb3c4'][c.codigo_coip] }))} />
-                <p className="n" style={{ marginTop: 12 }}>El modelo predice solo el <b>código 1</b> (delito explícito).</p></div>
+                <p className="n" style={{ marginTop: 12 }}>El modelo predice solo el <b>código 1</b> (delito explícito). La etiqueta «Delito» de nuestras reglas de palabras clave suma más (34.997) porque incluye también agresiones, daños y otros casos que Sonia deja como «posible» o «ambiguo»; ver «¿Qué cuenta como delito?».</p></div>
             </div>
           </section>)}
 

@@ -8,7 +8,9 @@ export function LineChart({ x, series, bands = [], h = 300, xlab = [], corte = n
   const w = compact ? 300 : 760, p = compact ? { l: 30, r: 6, t: 8, b: 6 } : { l: 46, r: 14, t: 12, b: 30 };
   const iw = w - p.l - p.r, ih = h - p.t - p.b, n = x.length;
   const todos = series.flatMap(s => s.y).concat(bands.flatMap(b => b.hi)).filter(v => v != null);
-  const mx = (Math.max(...todos, 1)) * 1.08, mn = ymin;
+  const mxRaw = Math.max(...todos, 1) * 1.05, mn = ymin;
+  const paso = (() => { const g = (mxRaw - mn) / 4, e = Math.pow(10, Math.floor(Math.log10(g))), f = g / e; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * e; })();
+  const mx = mn + paso * 4;
   const X = i => p.l + (i / (n - 1 || 1)) * iw, Y = v => p.t + ih - ((v - mn) / (mx - mn)) * ih;
   const path = ys => { let d = ''; ys.forEach((v, i) => { if (v != null) d += `${d && ys[i - 1] != null ? 'L' : 'M'}${X(i).toFixed(1)},${Y(v).toFixed(1)}`; }); return d; };
   const area = b => {
