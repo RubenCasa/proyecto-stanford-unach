@@ -11,6 +11,7 @@ const ICO = { inicio: 'M3 13h8V3H3zm0 8h8v-6H3zm10 0h8V11h-8zm0-18v6h8V3z', mapa
 const SECC = [['inicio', 'Inicio'], ['mapa', 'Mapa'], ['pron', 'Alertas y pronóstico'], ['tend', 'Futuro hasta 2029'], ['modelos', '¿Qué tan confiable?'], ['abig', 'Abigeato'], ['metodo', 'Método y límites']];
 const YRS = ['2022', '2023', '2024', '2025', '2026', '2027', '2028', '2029'];
 const Badge = ({ a }) => <span className={`badge b-${a}`}>{a}</span>;
+const Guia = ({ e, children }) => <div className="guia"><b className="e">{e}</b><div>{children}</div></div>;
 const Info = ({ t }) => <span className="info" data-tip={t} tabIndex={0}>i</span>;
 
 function Tabla({ cols, rows, onRow }) {
@@ -133,6 +134,7 @@ function Pronostico({ D, pron, p1, umbral, setUmbral, onParroquia }) {
   const csv = () => { const c = 'parroquia,semana_inicio,prediccion,rango_bajo,rango_alto,prom_52_sem,prob_al_menos_1,indice,alerta\n' + filas.map(r => [r.parroquia_corta, r.semana_inicio, r.prediccion, r.rango_bajo, r.rango_alto, r.media_52_semanas, r.prob_al_menos_1, r.indice, r.alerta].join(',')).join('\n'); const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([c], { type: 'text/csv' })); a.download = 'pronostico_stanford.csv'; a.click(); };
   return (
     <section>
+      <Guia e="🚦"><b>Qué estás viendo:</b> cuántos delitos se esperan la próxima semana en cada parroquia. <b>Rojo</b> = se espera bastante más de lo habitual, <b>amarillo</b> = atención, <b>verde</b> = normal. Toca una tarjeta para verla en el mapa.</Guia>
       <div className="card" style={{ marginBottom: 16 }}>
         <div className="row" style={{ margin: 0, justifyContent: 'space-between' }}>
           <div style={{ flex: 1, minWidth: 260 }}><h3>¿Qué tan sensible quieres la alerta?<Info t="Índice = pronóstico / promedio de las últimas 52 semanas × 100. Alerta Alta si el índice supera 100 + el porcentaje elegido." /></h3>
@@ -189,6 +191,7 @@ function Tendencia({ D, par, setPar }) {
   }
   return (
     <section>
+      <Guia e="🔮"><b>Qué estás viendo:</b> cómo han sido y cómo serían los delitos de cada parroquia hasta 2029. Elige una parroquia, o usa <b>Comparar</b> para ver varias juntas. La zona sombreada es el rango donde probablemente caerá la cifra.</Guia>
       <div className="card">
         <div className="row"><h3 style={{ margin: 0 }}>Tendencia mensual hasta 2029</h3>
           <select value={p} onChange={e => setPar(e.target.value)}>{pars.map(q => <option key={q} value={q}>{nom(q)}{FOCO.includes(q) ? ' ★' : ''}</option>)}</select>
@@ -239,6 +242,7 @@ function Abigeato({ D }) {
   const ab = D.abigeato, tot = ab['Por anio'].reduce((s, r) => s + r.casos, 0), rur = ab['Por parroquia'].filter(r => r.parroquia_corta !== 'RIOBAMBA').reduce((s, r) => s + r.casos, 0);
   return (
     <section>
+      <Guia e="🐄"><b>Qué estás viendo:</b> el robo de ganado (abigeato) en el cantón: cuántos casos hubo cada año, en qué meses y días ocurre más y en qué parroquias.</Guia>
       <div className="grid g3">
         <Kpi l="Casos registrados" v={fmt(tot)} d="jul-2021 a sep-2026" c="var(--azul)" />
         <Kpi l="En zonas rurales" v={fmt((rur / tot) * 100, 0) + ' %'} d="fuera de la zona urbana de Riobamba" c="var(--verde)" />

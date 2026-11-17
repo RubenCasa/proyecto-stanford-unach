@@ -107,3 +107,14 @@ aside nav a span{white-space:nowrap}
 }
 .bar .fi{display:block}
 .n{font-size:12.5px;color:var(--mut);line-height:1.45}
+
+.rank{max-height:210px;overflow:auto;margin:0 -4px;padding:0 4px}
+.rank button{display:flex;align-items:center;gap:9px;width:100%;border:0;background:none;padding:6px 8px;border-radius:9px;font:inherit;font-size:13px;color:var(--ink);cursor:pointer;text-align:left}
+.rank button:hover{background:rgba(31,111,178,.1)}.rank button.on{background:rgba(224,83,58,.14);font-weight:700}
+.rank i{width:12px;height:12px;border-radius:4px;flex:none;border:1px solid rgba(0,0,0,.12)}.rank span{flex:1}.rank b{font-variant-numeric:tabular-nums;color:var(--mut);font-size:12px}
+.veredicto{border-left:5px solid;background:rgba(0,0,0,.03);border-radius:10px;padding:10px 12px}[data-t=dark] .veredicto{background:rgba(255,255,255,.05)}
+.hint{left:50%;transform:translateX(-50%);bottom:26px;padding:10px 18px;font-size:14px;font-weight:600;cursor:pointer;animation:rebota 2s infinite}.hint span{margin-left:10px;color:var(--mut)}
+@keyframes rebota{50%{transform:translateX(-50%) translateY(-5px)}}
+.aviso-m{left:50%;transform:translateX(-50%);top:70px;padding:9px 16px;font-size:13px;background:#fff7e0}
+.guia{display:flex;gap:12px;align-items:flex-start;background:linear-gradient(90deg,rgba(31,111,178,.10),rgba(43,179,192,.07));border:1px solid rgba(31,111,178,.2);border-radius:14px;padding:12px 16px;margin-bottom:16px;font-size:13.5px;line-height:1.5}
+.guia b.e{font-size:20px}
