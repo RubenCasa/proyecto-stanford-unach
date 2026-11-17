@@ -61,6 +61,17 @@ rb <- rb %>% select(-any_of(c("codigo_coip", "articulo_coip", "clave"))) %>%
   mutate(codigo_coip = if_else(servicio == SERVICIO_FOCO, coalesce(codigo_coip, 0L), NA_integer_),
          delictivo = servicio == SERVICIO_FOCO & codigo_coip == 1L) %>%
   select(-clave)
+# [ESCENARIOS 17-nov] Si ESCENARIO = "A" o "AB", se suman los subtipos justificados por el equipo
+# (05_documentos/Terminos_por_justificar_ampliar_base.xlsx). Sin variable = base de Sonia.
+ESC <- Sys.getenv("ESCENARIO", "")
+if (nzchar(ESC)) {
+  ov <- read_excel(file.path(DIR_DOCS, "Terminos_por_justificar_ampliar_base.xlsx"), sheet = "Por justificar")
+  niv <- if (ESC == "A") "A" else c("A", "B")
+  claves_ov <- clave_subtipo(ov$`Subtipo (ECU 911)`[substr(ov$`Nivel de propuesta`, 1, 1) %in% niv])
+  rb <- rb %>% mutate(codigo_coip = if_else(servicio == SERVICIO_FOCO & clave_subtipo(subtipo) %in% claves_ov, 1L, codigo_coip),
+                      delictivo = servicio == SERVICIO_FOCO & codigo_coip == 1L)
+  message("ESCENARIO ", ESC, ": ", length(claves_ov), " subtipos añadidos; delitos = ", sum(rb$delictivo, na.rm = TRUE))
+}
 stopifnot(nrow(rb) == n_registros)
 resumen_coip <- rb %>% filter(servicio == SERVICIO_FOCO) %>%
   count(codigo_coip, name = "registros") %>%

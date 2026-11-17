@@ -60,8 +60,19 @@ tipo=x("tablas/07b_objetivo_delictivo.xlsx","Tipo de registro").round(1).to_dict
 av=x("tablas/07b_objetivo_delictivo.xlsx","Antes vs ahora").round(2).to_dict("records")
 pa=x("tablas/07b_objetivo_delictivo.xlsx","Por año"); pa=pa.round(1).to_dict("records")
 ab={s:x("tablas/13_abigeato.xlsx",s).round(2).to_dict("records") for s in ["Por anio","Por mes","Por parroquia","Por dia"]}
+# --- escenarios de definición de delito (base de Sonia / ampliado A / ampliado A+B)
+R=os.path.join(os.path.dirname(os.path.abspath(__file__)),"..")
+def pron_esc(e):
+    q=pd.read_excel(os.path.join(R,"_escenarios",e,"modelos","10_resultados_modelos.xlsx"),sheet_name="Pronosticos")
+    q["semana_inicio"]=q["semana_inicio"].dt.strftime("%Y-%m-%d"); return q.round(2).to_dict("records")
+cmp_=pd.read_excel(os.path.join(R,"05_documentos","Comparacion_escenarios_objetivo.xlsx"))
+cmp_=cmp_.set_index("Indicador").T.reset_index().rename(columns={"index":"escenario"})
+ter=pd.read_excel(os.path.join(R,"05_documentos","Terminos_por_justificar_ampliar_base.xlsx"),sheet_name="Por justificar")
+ter=ter[["Tipo de registro","Subtipo (ECU 911)","Registros","Código de Sonia","Nivel de propuesta","Código propuesto por el equipo","Artículo COIP / protocolo que lo justifica","Justificación"]].fillna("")
+ter.columns=["tipo","subtipo","registros","sonia","nivel","propuesto","articulo","justificacion"]
+esc=dict(pron={"A":pron_esc("A"),"AB":pron_esc("AB")},comparacion=cmp_.to_dict("records"),terminos=ter.to_dict("records"))
 D=dict(geo=feats,pron=pron,metricas=mae,resumen=res,azar=azar,rv=rv,variables=var,mensual=mens,cambio=cambio,backtest=back,
-       codigo=cod,tipo=tipo,antes=av,porano=pa,abigeato=ab,generado=dt.date.today().isoformat())
+       codigo=cod,tipo=tipo,antes=av,porano=pa,abigeato=ab,esc=esc,generado=dt.date.today().isoformat())
 json.dump(D,open(os.path.join(os.path.dirname(os.path.abspath(__file__)),"data.tmp"),"w"),ensure_ascii=False,separators=(",",":"),default=str)
 import re
 base=os.path.dirname(os.path.abspath(__file__))

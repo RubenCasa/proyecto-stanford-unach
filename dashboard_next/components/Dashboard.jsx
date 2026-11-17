@@ -7,8 +7,8 @@ import { COL, FOCO, PAL, carita, fmt, mesTxt, nom, semana } from '../lib/util';
 
 const MapaVivo = dynamic(() => import('./MapaVivo'), { ssr: false, loading: () => <div className="card" style={{ height: 500, display: 'grid', placeItems: 'center' }}>Cargando mapa…</div> });
 
-const ICO = { inicio: 'M3 13h8V3H3zm0 8h8v-6H3zm10 0h8V11h-8zm0-18v6h8V3z', mapa: 'M20.5 3l-6 2-5-2-6 2v16l6-2 5 2 6-2zM9 5.5l5 1.7v11.3l-5-1.7z', pron: 'M12 2l3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-7.5L2 9h7z', tend: 'M3 17l6-6 4 4 8-8v6h2V3h-10v2h6l-6 6-4-4-8 8z', modelos: 'M12 3l9 4.5v9L12 21l-9-4.5v-9zm0 2.2L5.5 8.4 12 11.6l6.5-3.2z', abig: 'M4 20h16v-2H4zM6 8l3-4 3 4 3-4 3 4v8H6z', metodo: 'M12 2a10 10 0 100 20 10 10 0 000-20zm1 15h-2v-6h2zm0-8h-2V7h2z' };
-const SECC = [['inicio', 'Inicio'], ['mapa', 'Mapa'], ['pron', 'Alertas y pronóstico'], ['tend', 'Futuro hasta 2029'], ['modelos', '¿Qué tan confiable?'], ['abig', 'Abigeato'], ['metodo', 'Método y límites']];
+const ICO = { esc: 'M3 6h18v2H3zm4 5h10v2H7zm3 5h4v2h-4z', inicio: 'M3 13h8V3H3zm0 8h8v-6H3zm10 0h8V11h-8zm0-18v6h8V3z', mapa: 'M20.5 3l-6 2-5-2-6 2v16l6-2 5 2 6-2zM9 5.5l5 1.7v11.3l-5-1.7z', pron: 'M12 2l3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-7.5L2 9h7z', tend: 'M3 17l6-6 4 4 8-8v6h2V3h-10v2h6l-6 6-4-4-8 8z', modelos: 'M12 3l9 4.5v9L12 21l-9-4.5v-9zm0 2.2L5.5 8.4 12 11.6l6.5-3.2z', abig: 'M4 20h16v-2H4zM6 8l3-4 3 4 3-4 3 4v8H6z', metodo: 'M12 2a10 10 0 100 20 10 10 0 000-20zm1 15h-2v-6h2zm0-8h-2V7h2z' };
+const SECC = [['inicio', 'Inicio'], ['mapa', 'Mapa'], ['pron', 'Alertas y pronóstico'], ['tend', 'Futuro hasta 2029'], ['modelos', '¿Qué tan confiable?'], ['esc', '¿Qué cuenta como delito?'], ['abig', 'Abigeato'], ['metodo', 'Método y límites']];
 const YRS = ['2022', '2023', '2024', '2025', '2026', '2027', '2028', '2029'];
 const Badge = ({ a }) => <span className={`badge b-${a}`}>{a}</span>;
 function Cuenta({ n, dec = 0, suf = '' }) {
@@ -109,13 +109,14 @@ export default function Dashboard({ datos: D, pronInicial }) {
   const [fuente, setFuente] = useState('…');
   const [paleta, setPaleta] = useState(false);
   const [tour, setTour] = useState(true);
+  const [esc, setEsc] = useState('base');       // definición de delito: base (Sonia) | A | AB
   const [sem, setSem] = useState(1);            // semana elegida (horizonte 1..12 después del último dato)
   const [hoy, setHoy] = useState(null);        // fecha de hoy (solo en el navegador)
   const elegida = useRef(false);
 
   /* datos que vienen de la API */
   useEffect(() => { api('mapa', {}, D).then(r => { setMat(r.data); setFuente(r.fuente); }); }, [D]);
-  useEffect(() => { let vivo = true; api('pronostico', { umbral }, D).then(r => { if (vivo) { setPron(r.data.filas); setFuente(r.fuente); } }); return () => { vivo = false; }; }, [umbral, D]);
+  useEffect(() => { let vivo = true; api('pronostico', { umbral, esc: esc === 'base' ? '' : esc }, D).then(r => { if (vivo) { setPron(r.data.filas); setFuente(r.fuente); } }); return () => { vivo = false; }; }, [umbral, D, esc]);
   useEffect(() => { document.documentElement.dataset.t = oscuro ? 'dark' : ''; }, [oscuro]);
   useEffect(() => { const h = location.hash.slice(1); if (SECC.some(s => s[0] === h)) setSec(h); }, []);
   const ir = useCallback(k => { setSec(k); history.replaceState(null, '', '#' + k); window.scrollTo(0, 0); }, []);
@@ -165,7 +166,7 @@ export default function Dashboard({ datos: D, pronInicial }) {
           <div className="row" style={{ margin: 0 }}>
             <button className="btn sec" onClick={() => setTour(true)}>❓ Guía</button>
             <button className="btn sec" onClick={() => setOscuro(!oscuro)}>{oscuro ? '☀️ Claro' : '🌙 Oscuro'}</button>
-            <div className="chip" suppressHydrationWarning>{fuente === 'API' ? '🟢 API en vivo' : '⚪ Datos locales'} · {new Date(D.generado + 'T12:00').toLocaleDateString('es-EC', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
+            <div className="chip" suppressHydrationWarning>{esc !== 'base' && <b style={{ color: 'var(--rojo)' }}>Escenario {esc === 'A' ? 'A' : 'A+B'} · </b>}{fuente === 'API' ? '🟢 API en vivo' : '⚪ Datos locales'} · {new Date(D.generado + 'T12:00').toLocaleDateString('es-EC', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
           </div>
         </header>
 
@@ -233,6 +234,7 @@ export default function Dashboard({ datos: D, pronInicial }) {
         {sec === 'pron' && <Pronostico D={D} pron={pron} p1={p1} semanas={semanas} sem={sem} setSem={elegir} umbral={umbral} setUmbral={setUmbral} onParroquia={verParroquia} />}
         {sec === 'tend' && <Tendencia D={D} par={par} setPar={setPar} />}
         {sec === 'modelos' && <Modelos D={D} />}
+        {sec === 'esc' && <Escenarios D={D} esc={esc} setEsc={setEsc} ir={ir} />}
         {sec === 'abig' && <Abigeato D={D} />}
         {sec === 'metodo' && <Metodo />}
       </main>
@@ -403,6 +405,57 @@ function Abigeato({ D }) {
         <div className="card"><h3>Promedio por mes del año</h3><p className="n">Más casos en mayo y de agosto a octubre. Febrero queda algo bajo porque febrero de 2023 no trae el tipo de delito.</p><Columnas color="#2bb3c0" items={ab['Por mes'].map(r => ({ n: r.mes, l: r.mes.slice(0, 3), v: r.promedio }))} /></div>
         <div className="card"><h3>Dónde ocurre</h3><Barras color="#3f9d6b" items={ab['Por parroquia'].map(r => ({ n: nom(r.parroquia_corta), v: r.casos }))} /></div>
         <div className="card"><h3>Qué día de la semana</h3><Columnas color="#7d5bbe" yfmt={v => fmt(v)} items={ab['Por dia'].map(r => ({ n: r.dia_semana, l: r.dia_semana.slice(0, 3), v: r.casos }))} /></div>
+      </div>
+    </section>
+  );
+}
+
+/* ---------- ¿Qué cuenta como delito? (escenarios) ---------- */
+const ESC_INFO = [
+  { k: 'base', fila: 'Base (Sonia)', t: 'Base de Sonia', e: '📘', d: 'Solo lo que el catálogo COIP de Sonia Calle marca como delito explícito (código 1). Es el resultado oficial del proyecto.' },
+  { k: 'A', fila: 'A', t: 'Ampliado A', e: '📗', d: 'Suma 15 tipos que el COIP nombra expresamente (violencia física familiar, drogas, armas de fuego, abandono, delitos sexuales…). Confianza alta.' },
+  { k: 'AB', fila: 'A+B', t: 'Ampliado A+B', e: '📙', d: 'Suma además 15 tipos probables (agresiones, personas heridas, daños, fraude). Confianza media o baja: depende de lo que realmente pasó.' },
+];
+function Escenarios({ D, esc, setEsc, ir }) {
+  const E = D.esc;
+  const [nivel, setNivel] = useState('todos'), [q, setQ] = useState('');
+  if (!E) return <section><div className="card">Sin datos de escenarios.</div></section>;
+  const fila = n => E.comparacion.find(r => r.escenario === n) || {};
+  const claves = Object.keys(E.comparacion[0] || {}).filter(k => k !== 'escenario');
+  const filas = claves.map(k => ({ k, ...Object.fromEntries(E.comparacion.map(r => [r.escenario, r[k]])) }));
+  const terms = E.terminos.filter(t => (nivel === 'todos' || t.nivel.startsWith(nivel)) && (t.subtipo + t.justificacion).toLowerCase().includes(q.toLowerCase())).sort((a, b) => a.nivel[0].localeCompare(b.nivel[0]) || b.registros - a.registros);
+  const colN = { A: '#3f9d6b', B: '#d08a00', C: '#8a98a8' };
+  return (
+    <section>
+      <Guia e="📚"><b>¿Qué cuenta como «delito»?</b> El ECU 911 registra llamadas de todo tipo (patrullajes, escándalos, heridos…). El proyecto parte del catálogo de Sonia Calle y el equipo propone <b>sumar</b> otros tipos que el COIP sí nombra. Elige una definición: <b>todo el tablero se recalcula</b> con ella.</Guia>
+      <div className="aviso" style={{ margin: '14px 0' }}>Las propuestas del equipo son un <b>borrador</b>: Sonia, los tutores o la Fiscalía deben validarlas antes de usarse como resultado final.</div>
+      <div className="semanas" style={{ gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))' }}>
+        {ESC_INFO.map(x => { const f = fila(x.fila); return (
+          <button key={x.k} className={esc === x.k ? 'on' : ''} onClick={() => setEsc(x.k)}>
+            <span className="sc">{x.e}</span><b className="sf">{x.t}</b>
+            <span className="sd" style={{ marginTop: 0 }}>{x.d}</span>
+            <span className="sd"><b>{fmt(f['Delitos (registros)'])}</b> delitos · error en Riobamba <b>{f['Error relativo Riobamba %']} %</b></span>
+            <span className="st" style={{ color: esc === x.k ? '#1f6fb2' : 'var(--mut)' }}>{esc === x.k ? '✔ En uso en todo el tablero' : 'Tocar para usar'}</span>
+          </button>); })}
+      </div>
+      <div className="grid g2" style={{ marginTop: 16 }}>
+        <div className="card"><h3>Comparación lado a lado</h3>
+          <Tabla cols={[{ t: 'Indicador', f: r => r.k }, ...ESC_INFO.map(x => ({ t: x.t, r: 1, f: r => r[x.fila] }))]} rows={filas} /></div>
+        <div className="card"><h3>Qué nos dice</h3>
+          <ul className="lista">
+            <li><b>Riobamba mejora un poco</b> al ampliar: el error relativo baja de {fila('Base (Sonia)')['Error relativo Riobamba %']} % a {fila('A+B')['Error relativo Riobamba %']} %.</li>
+            <li><b>Flores y Cubijíes no mejoran</b>: tienen muy pocos casos por semana, y sumar tipos no ayuda.</li>
+            <li><b>Las alertas se mueven más que la precisión</b>: pasan de {fila('Base (Sonia)')['Alertas altas (12 sem × parroquias)']} a unas {fila('A+B')['Alertas altas (12 sem × parroquias)']}. Por eso la definición debe validarse antes de decidir.</li>
+          </ul>
+          <button className="btn sec" onClick={() => ir('pron')}>Ver alertas con esta definición →</button></div>
+      </div>
+      <h2 className="h2">Tipos de llamada que se proponen · {terms.length} de {E.terminos.length}</h2>
+      <div className="card">
+        <div className="row"><input placeholder="Buscar un tipo (ej. armas, violencia)…" value={q} onChange={e => setQ(e.target.value)} />
+          <select value={nivel} onChange={e => setNivel(e.target.value)}><option value="todos">Todos</option><option value="A">A · Incluir (alta)</option><option value="B">B · Solo ampliado (media/baja)</option><option value="C">C · Mantener fuera</option></select></div>
+        <Tabla cols={[{ t: 'Tipo (ECU 911)', f: r => r.subtipo }, { t: 'Casos', r: 1, f: r => fmt(r.registros) }, { t: 'Sonia', r: 1, f: r => r.sonia },
+          { t: 'Propuesta', f: r => <b style={{ color: colN[r.nivel[0]] }}>{r.nivel.split(' · ')[1] ? r.nivel.split(' (')[0] : r.nivel}</b> }, { t: 'COIP', f: r => r.articulo || '—' }, { t: 'Por qué', f: r => r.justificacion }]} rows={terms.slice(0, 60)} />
+        {terms.length > 60 && <p className="n">Se muestran 60; usa el buscador o el filtro para ver el resto.</p>}
       </div>
     </section>
   );

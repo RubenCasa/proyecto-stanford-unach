@@ -9,7 +9,8 @@
 
   L.pronostico = (D, q = {}) => {
     const umbral = num(q.umbral, 25), h = num(q.horizonte, 0);
-    const filas = D.pron.filter(p => !h || p.horizonte === h).map(p => ({ ...p, alerta: L.alerta(p.indice, umbral) }));
+    const src = (q.esc && D.esc && D.esc.pron && D.esc.pron[q.esc]) || D.pron;
+    const filas = src.filter(p => !h || p.horizonte === h).map(p => ({ ...p, alerta: L.alerta(p.indice, umbral) }));
     return { umbral, filas, altas: filas.filter(p => p.horizonte === 1 && p.alerta === 'Alta').map(p => p.parroquia_corta) };
   };
 
