@@ -2,7 +2,12 @@
 (function (root) {
   const L = {};
   const num = (v, d) => (v === undefined || v === '' || isNaN(+v) ? d : +v);
-  L.alerta = (indice, umbral) => (indice >= 100 + umbral ? 'Alta' : indice >= 100 + umbral / 2 ? 'Media' : 'Normal');
+  /* Alerta = el pronóstico supera el promedio de 52 semanas en el % elegido Y la diferencia es mayor que el azar normal
+     (≈ √promedio, desviación de un conteo de Poisson). Evita alarmas por 0,2 delitos en parroquias con pocos casos. */
+  L.alerta = (indice, umbral, pred, media) => {
+    const azar = Math.sqrt(Math.max(media == null ? 0 : media, 0.1)), dif = pred == null || media == null ? Infinity : pred - media;
+    return indice >= 100 + umbral && dif >= azar ? 'Alta' : indice >= 100 + umbral / 2 && dif >= azar / 2 ? 'Media' : 'Normal';
+  };
   L.roll12 = arr => arr.map((_, i) => (i < 11 ? null : arr.slice(i - 11, i + 1).reduce((a, b) => a + (b || 0), 0)));
 
   L.datos = D => D;
@@ -10,7 +15,7 @@
   L.pronostico = (D, q = {}) => {
     const umbral = num(q.umbral, 25), h = num(q.horizonte, 0);
     const src = (q.esc && D.esc && D.esc.pron && D.esc.pron[q.esc]) || D.pron;
-    const filas = src.filter(p => !h || p.horizonte === h).map(p => ({ ...p, alerta: L.alerta(p.indice, umbral) }));
+    const filas = src.filter(p => !h || p.horizonte === h).map(p => ({ ...p, alerta: L.alerta(p.indice, umbral, p.prediccion, p.media_52_semanas) }));
     return { umbral, filas, altas: filas.filter(p => p.horizonte === 1 && p.alerta === 'Alta').map(p => p.parroquia_corta) };
   };
 

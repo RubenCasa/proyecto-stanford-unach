@@ -70,6 +70,16 @@ cmp_=cmp_.set_index("Indicador").T.reset_index().rename(columns={"index":"escena
 ter=pd.read_excel(os.path.join(R,"05_documentos","Terminos_por_justificar_ampliar_base.xlsx"),sheet_name="Por justificar")
 ter=ter[["Tipo de registro","Subtipo (ECU 911)","Registros","Código de Sonia","Nivel de propuesta","Código propuesto por el equipo","Artículo COIP / protocolo que lo justifica","Justificación"]].fillna("")
 ter.columns=["tipo","subtipo","registros","sonia","nivel","propuesto","articulo","justificacion"]
+import math
+def _alta(r,u=25):
+    az=math.sqrt(max(r["media_52_semanas"],0.1)); return r["indice"]>=100+u and r["prediccion"]-r["media_52_semanas"]>=az
+_n={"Base (Sonia)":sum(_alta(r) for r in pron),"A":sum(_alta(r) for r in pron_esc("A")),"A+B":sum(_alta(r) for r in pron_esc("AB"))}
+def _alerta(r,u=25):
+    az=math.sqrt(max(r["media_52_semanas"],0.1)); dif=r["prediccion"]-r["media_52_semanas"]
+    return (r["indice"]>=100+u and dif>=az) or (r["indice"]>=100+u/2 and dif>=az/2)
+_m={"Base (Sonia)":sum(_alerta(r) for r in pron),"A":sum(_alerta(r) for r in pron_esc("A")),"A+B":sum(_alerta(r) for r in pron_esc("AB"))}
+cmp_=cmp_.drop(columns=["Alertas altas (12 sem × parroquias)"],errors="ignore")
+cmp_["Alertas (altas o medias, 12 semanas)"]=cmp_["escenario"].map(_m)
 esc=dict(pron={"A":pron_esc("A"),"AB":pron_esc("AB")},comparacion=cmp_.to_dict("records"),terminos=ter.to_dict("records"))
 D=dict(geo=feats,pron=pron,metricas=mae,resumen=res,azar=azar,rv=rv,variables=var,mensual=mens,cambio=cambio,backtest=back,
        codigo=cod,tipo=tipo,antes=av,porano=pa,abigeato=ab,esc=esc,generado=dt.date.today().isoformat())

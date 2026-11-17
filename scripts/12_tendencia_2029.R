@@ -36,6 +36,10 @@ message("Serie mensual: ", min(serie$mes), " a ", max(serie$mes), " · ",
 
 modelos <- function(d) d %>% model(
   `Promedio histórico`          = MEAN(incidentes),
+  # 16-nov: promedio de cada mes del año (enero con los eneros...). Mismo nivel que el
+  # promedio histórico pero con meses altos y bajos. Solo compite en la urbana: en las
+  # rurales hay muy pocos casos para estimar 12 promedios mensuales.
+  `Promedio por mes del año`    = TSLM(incidentes ~ season()),
   `Tendencia log-lineal`        = TSLM(log(incidentes + 1) ~ trend() + season()),
   `ETS (tendencia amortiguada)` = ETS(incidentes ~ error("A") + trend(c("N", "Ad")) + season(c("N", "A"))),
   `ARIMA`                       = ARIMA(incidentes),
@@ -67,18 +71,24 @@ elegido_urbana <- metr_bt %>% filter(zona == "Urbana") %>% slice(1) %>% pull(mod
 # mejor puesto promedio en Cubijíes y Flores; el error del conjunto rural
 # desempata. (Revisión del 02-nov: ARIMA quedaba bien pero proyectaba -50 % en
 # Cubijíes; el promedio histórico era el peor en Cubijíes.)
-puestos_rural <- fc_bt %>% filter(cod_parroquia != "060150") %>%
+puestos_rural <- fc_bt %>% filter(cod_parroquia != "060150", modelo != "Promedio por mes del año") %>%
   mutate(grupo = "Rurales") %>%
-  bind_rows(fc_bt %>% filter(cod_parroquia %in% names(PARROQUIAS_FOCO)) %>%
+  bind_rows(fc_bt %>% filter(cod_parroquia %in% names(PARROQUIAS_FOCO), modelo != "Promedio por mes del año") %>%
               mutate(grupo = parroquia_corta)) %>%
   group_by(grupo, modelo) %>% summarise(MAE = mean(abs(real - pronostico)), .groups = "drop") %>%
   group_by(grupo) %>% mutate(puesto = rank(MAE, ties.method = "min")) %>% ungroup()
 print(puestos_rural %>% arrange(grupo, puesto))
+# 17-nov: la regla anterior (mejor puesto en Cubijíes y Flores) elegía la tendencia log-lineal, que
+# tiene el PEOR error del conjunto rural (1,92 vs 1,58) y proyecta cambios poco creíbles en parroquias
+# pequeñas (Cacha -50 %, Quimiag -47 %, Pungalá +57 %). Nueva regla: manda el error del conjunto
+# rural; los métodos a menos de 1 % del mejor se consideran empatados y se desempata por el error
+# sumado en Cubijíes y Flores (las parroquias beneficiarias).
 ranking_rural <- function(excluir = character()) puestos_rural %>%
   filter(!modelo %in% excluir) %>% group_by(modelo) %>%
-  summarise(puesto_beneficiarias = mean(puesto[grupo != "Rurales"]),
-            MAE_rurales = MAE[grupo == "Rurales"], .groups = "drop") %>%
-  arrange(puesto_beneficiarias, MAE_rurales)
+  summarise(MAE_rurales = MAE[grupo == "Rurales"],
+            MAE_beneficiarias = sum(MAE[grupo != "Rurales"]), .groups = "drop") %>%
+  mutate(empatado = MAE_rurales <= min(MAE_rurales) * 1.01) %>%
+  arrange(desc(empatado), if_else(empatado, MAE_beneficiarias, MAE_rurales))
 print(ranking_rural())
 elegido_rural <- ranking_rural()$modelo[1]
 message(">>> Tendencia URBANA: ", elegido_urbana, " · RURALES: ", elegido_rural)

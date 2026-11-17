@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { LineChart } from './Charts';
-import { COL, FOCO, fmt, nom, mesTxt } from '../lib/util';
+import { COL, FOCO, fmt, nom, mesTxt, ruido } from '../lib/util';
 const FOCO_SET = new Set(FOCO);
 
 const escala = v => (v > 50 ? '#0b3d6e' : v > 5 ? '#2f78b7' : v > 1 ? '#74b3dc' : v > 0.1 ? '#bcdcef' : '#e9f3f9');
@@ -37,8 +37,8 @@ export default function MapaVivo({ datos: D, pron1, semanas, sem, setSem, mat, s
       col: d => escala(d.km2), lbl: d => fmt(d.suma), ord: d => d.km2, leg: [['> 50 / km²', '#0b3d6e'], ['5–50', '#2f78b7'], ['1–5', '#74b3dc'], ['0,1–1', '#bcdcef'], ['< 0,1', '#e9f3f9']] },
     alerta: { t: '🚦 Alertas', d: n => pron1.find(p => p.parroquia_corta === n), col: p => COL[p.alerta], lbl: p => p.alerta, ord: p => p.indice, leg: [['Normal', COL.Normal], ['Media', COL.Media], ['Alta', COL.Alta]] },
     cambio: { t: '🔮 Hacia 2029', d: n => camb.find(c => c.parroquia_corta === n),
-      col: c => { const v = c.cambio_2025_2029_pct; return v > 10 ? '#e0533a' : v > 0 ? '#f3a58f' : v > -10 ? '#a9d3e8' : '#2f86b8'; },
-      lbl: c => (c.cambio_2025_2029_pct > 0 ? '+' : '') + fmt(c.cambio_2025_2029_pct, 0) + ' %', ord: c => c.cambio_2025_2029_pct, leg: [['Sube > 10 %', '#e0533a'], ['Sube hasta 10 %', '#f3a58f'], ['Baja hasta 10 %', '#a9d3e8'], ['Baja > 10 %', '#2f86b8']] },
+      col: c => { const v = c.cambio_2025_2029_pct; if (ruido(c)) return '#cfd8e3'; return v > 10 ? '#e0533a' : v > 0 ? '#f3a58f' : v > -10 ? '#a9d3e8' : '#2f86b8'; },
+      lbl: c => (c.cambio_2025_2029_pct > 0 ? '+' : '') + fmt(c.cambio_2025_2029_pct, 0) + ' %', ord: c => c.cambio_2025_2029_pct, leg: [['Sube > 10 %', '#e0533a'], ['Sube hasta 10 %', '#f3a58f'], ['Baja hasta 10 %', '#a9d3e8'], ['Baja > 10 %', '#2f86b8'], ['Dentro del azar', '#cfd8e3']] },
     total: { t: '📊 Total 2025', d: n => camb.find(c => c.parroquia_corta === n),
       col: c => { const v = c['2025']; return v > 1000 ? '#0b3d6e' : v > 50 ? '#2f78b7' : v > 10 ? '#74b3dc' : '#bcdcef'; },
       lbl: c => fmt(c['2025']), ord: c => c['2025'], leg: [['> 1.000', '#0b3d6e'], ['51–1.000', '#2f78b7'], ['11–50', '#74b3dc'], ['≤ 10', '#bcdcef']] },
@@ -173,7 +173,7 @@ export default function MapaVivo({ datos: D, pron1, semanas, sem, setSem, mat, s
           <div className="grid" style={{ gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginTop: 10 }}>
             <div><div className="mini">2025</div><div className="num" style={{ fontSize: 20 }}>{fmt(c['2025'])}</div></div>
             <div><div className="mini">2029 (pron.)</div><div className="num" style={{ fontSize: 20 }}>{fmt(c['2029'])}</div></div>
-            <div><div className="mini">Cambio</div><div className="num" style={{ fontSize: 18, color: c.cambio_2025_2029_pct > 0 ? '#e0533a' : '#2f86b8' }}>{c.cambio_2025_2029_pct > 0 ? '+' : ''}{c.cambio_2025_2029_pct} %</div></div>
+            <div><div className="mini">Cambio</div><div className="num" style={{ fontSize: 18, color: c.cambio_2025_2029_pct > 0 ? '#e0533a' : '#2f86b8' }}>{c.cambio_2025_2029_pct > 0 ? '+' : ''}{c.cambio_2025_2029_pct} %{ruido(c) ? ' · azar' : ''}</div></div>
           </div>
           <p className="n" style={{ margin: '10px 0 0' }}>Delitos por mes desde 2023 (punteado = pronóstico)</p>
           <LineChart compact h={120} x={ult.map(i => mesTxt(ser.mes[i]))} corte={ult.indexOf(ip)}

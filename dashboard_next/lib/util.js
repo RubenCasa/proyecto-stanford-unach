@@ -26,3 +26,6 @@ export function carita(filas) {
   if (med.length) return { e: '😐', t: `Atención en ${nombres(med)}`, c: '#d08a00' };
   return { e: '🙂', t: 'Todo tranquilo', c: '#3f9d6b' };
 }
+
+/* ¿El cambio 2025→2029 cabe dentro de la variación normal por azar? (≈ ±2·√n de una cuenta de Poisson) */
+export const ruido = c => Math.abs(c['2029'] - c['2025']) < 2 * Math.sqrt(Math.max(c['2025'], 1));
