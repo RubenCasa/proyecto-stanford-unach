@@ -210,6 +210,7 @@ export default function Dashboard({ datos: D, pronInicial }) {
                 <p>
                   <b>{sw.largo.charAt(0).toUpperCase() + sw.largo.slice(1)}</b> se esperan unos <b>{fmt(rio.prediccion)}</b> delitos en Riobamba. {altas.length ? <>Hay alerta alta en <b>{altas.map(a => nom(a.parroquia_corta)).join(' y ')}</b>.</> : <>No hay parroquias en alerta alta.</>} Hacia 2029 se espera un cantón <b>{total[7] < total[3] ? 'ligeramente a la baja' : 'estable o al alza'}</b>: {fmt(total[3])} delitos en 2025 → {fmt(total[7])} en 2029.
                 </p>
+                <p style={{ fontSize: 15, margin: '10px 0 0', color: '#cfe0ee' }}>★ En las parroquias foco: probabilidad de al menos un delito en esa semana de <b>{fmt(cub.prob_al_menos_1, 0)} %</b> en Cubijíes y <b>{fmt(flo.prob_al_menos_1, 0)} %</b> en Flores.</p>
                 <div className="top3"><div className="mini" style={{ color: '#9db8cc' }}>PARROQUIAS QUE MÁS SE ALEJAN DE LO HABITUAL EN ESA SEMANA</div>
                   {p1.slice().sort((a, b) => b.indice - a.indice).slice(0, 3).map(p => <button key={p.parroquia_corta} onClick={() => verParroquia(p.parroquia_corta)}><i style={{ background: COL[p.alerta] }} /><span>{nom(p.parroquia_corta)}</span><b>{p.indice > 100 ? '▲' : '▼'} {Math.abs(p.indice - 100)} % vs lo habitual</b></button>)}</div>
                 <div className="row" style={{ marginTop: 16 }}>
@@ -225,9 +226,6 @@ export default function Dashboard({ datos: D, pronInicial }) {
             <Semanas semanas={semanas} sem={sem} setSem={elegir} />
             <div className="caritas"><span>🙂 Todo tranquilo</span><span>😐 Atención</span><span>😟 Alerta</span></div>
 
-            <h2 className="h2">🔥 Todo el panorama</h2>
-            <Calor pron={pron} sem={sw.h} setSem={elegir} orden={orden} desde={semanas[0].h} />
-
             <h2 className="h2">★ Las parroquias foco del proyecto</h2>
             <div className="grid g2">
               {[cub, flo].map(p => { const [t, lv] = nivel(p.prob_al_menos_1), c = D.cambio.find(x => x.parroquia_corta === p.parroquia_corta); return (
@@ -241,6 +239,9 @@ export default function Dashboard({ datos: D, pronInicial }) {
                   </div>
                 </button>); })}
             </div>
+
+            <h2 className="h2">🔥 Todo el panorama</h2>
+            <Calor pron={pron} sem={sw.h} setSem={elegir} orden={orden} desde={semanas[0].h} />
 
             <h2 className="h2">Los delitos año por año</h2>
             <div className="card"><h3>Delitos por año en el cantón</h3><p className="n">Suma de las 12 parroquias. Desde 2026 incluye pronóstico.</p>
