@@ -265,6 +265,7 @@ export default function Dashboard({ datos: D, pronInicial }) {
           <h2 className="h2" id="metodo" style={{ marginTop: 28 }}>Método y límites</h2>
           <Metodo />
         </>}
+        <footer className="fuente">Fuente: ECU 911 (jul-2021 a sep-2026). Delitos explícitos según catálogo COIP (código 1). Los datos de Fiscalía aún no se incorporan. Proyecto STANFORD · UNACH · Ciencia de Datos e IA.</footer>
       </main>
 
       <nav className="bottom">{SECC.slice(0, 5).map(([k, t]) => <a key={k} className={sec === k ? 'on' : ''} onClick={() => ir(k)}><svg viewBox="0 0 24 24" fill="currentColor"><path d={ICO[k]} /></svg>{t.split(' ')[0]}</a>)}</nav>
