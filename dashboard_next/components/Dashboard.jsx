@@ -407,9 +407,12 @@ function Modelos({ D }) {
       <div className="aviso" style={{ marginBottom: 16 }}>Pregunta clave: <b>¿se puede confiar en el pronóstico?</b> Se reservó el último año (52 semanas) como prueba y se comparó lo predicho con lo que realmente pasó.</div>
       <div className="card" style={{ marginBottom: 16 }}>
         <h3>¿Puedo confiar en el pronóstico de cada parroquia?</h3>
-        <p className="n">Se medió cuánto se equivocó el modelo en el último año. Cuantos más delitos hay, más fácil es acertar.</p>
-        <div className="grid g3">{D.azar.map(r => { const e = r.error_relativo_pct, [t, c, ic] = e <= 20 ? ['Muy confiable', '#3f9d6b', '🟢'] : e <= 60 ? ['Confiable como guía', '#d08a00', '🟡'] : ['Solo orientativo', '#e0533a', '🟠']; return (
-          <div className="conf" key={r.parroquia_corta} style={{ borderLeftColor: c }}><b>{nom(r.parroquia_corta)}</b><span style={{ color: c }}>{ic} {t}</span><i>se equivoca ≈ {fmt(r.MAE_modelo, 1)} delitos por semana</i></div>); })}</div>
+        <p className="n">Hay un error que ningún modelo puede evitar: el <b>azar</b> (un delito más o menos en una semana). Aquí se compara cuánto se equivocó nuestro modelo en el último año con ese <b>mínimo posible</b>. Si se parecen, el modelo ya acierta lo máximo que los datos permiten; <b>un error relativo alto en una parroquia pequeña no significa que el modelo esté mal</b>, sino que casi no hay casos que predecir.</p>
+        <div className="grid g3">{D.azar.map(r => { const k = r.MAE_modelo / Math.max(r.MAE_modelo_perfecto, 0.001), [t, c, ic] = k <= 1.15 ? ['Acierta lo máximo posible', '#3f9d6b', '🟢'] : k <= 1.35 ? ['Muy cerca del máximo', '#d08a00', '🟡'] : ['Aún hay margen', '#e0533a', '🟠'];
+          return (
+          <div className="conf" key={r.parroquia_corta} style={{ borderLeftColor: c }}><b>{nom(r.parroquia_corta)}</b><span style={{ color: c }}>{ic} {t}</span>
+            <i>se equivoca ≈ {fmt(r.MAE_modelo, 2)} delitos por semana · mínimo por azar ≈ {fmt(r.MAE_modelo_perfecto, 2)}</i>
+            {r.media_semanal < 1 && <i style={{ display: 'block', marginTop: 2 }}>Pocos delitos ({fmt(r.media_semanal, 2)} por semana): usa la probabilidad, no el número exacto.</i>}</div>); })}</div>
       </div>
       <div className="grid g4">
         <Kpi l="Error del modelo elegido" v={fmt(m['Todas las parroquias'], 2)} d="delitos por parroquia y semana (MAE)" c="var(--verde)" info="MAE = error absoluto medio. Menor es mejor." />
