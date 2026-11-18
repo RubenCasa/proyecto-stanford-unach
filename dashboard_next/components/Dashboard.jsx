@@ -7,8 +7,9 @@ import { COL, FOCO, PAL, carita, fmt, mesTxt, nom, ruido, semana } from '../lib/
 
 const MapaVivo = dynamic(() => import('./MapaVivo'), { ssr: false, loading: () => <div className="card" style={{ height: 500, display: 'grid', placeItems: 'center' }}>Cargando mapa…</div> });
 
-const ICO = { esc: 'M3 6h18v2H3zm4 5h10v2H7zm3 5h4v2h-4z', inicio: 'M3 13h8V3H3zm0 8h8v-6H3zm10 0h8V11h-8zm0-18v6h8V3z', mapa: 'M20.5 3l-6 2-5-2-6 2v16l6-2 5 2 6-2zM9 5.5l5 1.7v11.3l-5-1.7z', pron: 'M12 2l3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-7.5L2 9h7z', tend: 'M3 17l6-6 4 4 8-8v6h2V3h-10v2h6l-6 6-4-4-8 8z', modelos: 'M12 3l9 4.5v9L12 21l-9-4.5v-9zm0 2.2L5.5 8.4 12 11.6l6.5-3.2z', abig: 'M4 20h16v-2H4zM6 8l3-4 3 4 3-4 3 4v8H6z', metodo: 'M12 2a10 10 0 100 20 10 10 0 000-20zm1 15h-2v-6h2zm0-8h-2V7h2z' };
-const SECC = [['inicio', 'Inicio'], ['mapa', 'Mapa'], ['pron', 'Alertas y pronóstico'], ['tend', 'Futuro hasta 2029'], ['modelos', '¿Qué tan confiable?'], ['esc', '¿Qué cuenta como delito?'], ['abig', 'Abigeato'], ['metodo', 'Método y límites']];
+const ICO = { conf: 'M12 2l9 4v6c0 5-3.8 9.7-9 10-5.2-.3-9-5-9-10V6l9-4zm-1 13l6-6-1.4-1.4L11 12.2 8.4 9.6 7 11l4 4z', esc: 'M3 6h18v2H3zm4 5h10v2H7zm3 5h4v2h-4z', inicio: 'M3 13h8V3H3zm0 8h8v-6H3zm10 0h8V11h-8zm0-18v6h8V3z', mapa: 'M20.5 3l-6 2-5-2-6 2v16l6-2 5 2 6-2zM9 5.5l5 1.7v11.3l-5-1.7z', pron: 'M12 2l3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-7.5L2 9h7z', tend: 'M3 17l6-6 4 4 8-8v6h2V3h-10v2h6l-6 6-4-4-8 8z', modelos: 'M12 3l9 4.5v9L12 21l-9-4.5v-9zm0 2.2L5.5 8.4 12 11.6l6.5-3.2z', abig: 'M4 20h16v-2H4zM6 8l3-4 3 4 3-4 3 4v8H6z', metodo: 'M12 2a10 10 0 100 20 10 10 0 000-20zm1 15h-2v-6h2zm0-8h-2V7h2z' };
+const SECC = [['inicio', 'Inicio'], ['mapa', 'Mapa'], ['pron', 'Pronóstico'], ['conf', 'Confianza y definiciones']];
+const ALIAS = { tend: 'pron', modelos: 'conf', esc: 'conf', abig: 'conf', metodo: 'conf' };
 const YRS = ['2022', '2023', '2024', '2025', '2026', '2027', '2028', '2029'];
 const Badge = ({ a }) => <span className={`badge b-${a}`}>{a}</span>;
 function Cuenta({ n, dec = 0, suf = '' }) {
@@ -150,8 +151,8 @@ export default function Dashboard({ datos: D, pronInicial }) {
   useEffect(() => { api('mapa', {}, D).then(r => { setMat(r.data); setFuente(r.fuente); }); }, [D]);
   useEffect(() => { let vivo = true; api('pronostico', { umbral, esc: esc === 'base' ? '' : esc }, D).then(r => { if (vivo) { setPron(r.data.filas); setFuente(r.fuente); } }); return () => { vivo = false; }; }, [umbral, D, esc]);
   useEffect(() => { document.documentElement.dataset.t = oscuro ? 'dark' : ''; }, [oscuro]);
-  useEffect(() => { const h = location.hash.slice(1); if (SECC.some(s => s[0] === h)) setSec(h); }, []);
-  const ir = useCallback(k => { setSec(k); history.replaceState(null, '', '#' + k); window.scrollTo(0, 0); }, []);
+  useEffect(() => { const h = location.hash.slice(1); const k = ALIAS[h] || h; if (SECC.some(s => s[0] === k)) { setSec(k); if (ALIAS[h]) setTimeout(() => document.getElementById(h)?.scrollIntoView(), 300); } }, []);
+  const ir = useCallback(k => { setSec(ALIAS[k] || k); history.replaceState(null, '', '#' + k); if (ALIAS[k]) setTimeout(() => document.getElementById(k)?.scrollIntoView({ behavior: 'smooth' }), 150); else window.scrollTo(0, 0); }, []);
   const verParroquia = useCallback(n => { setPar(n); if (n) ir('mapa'); }, [ir]);
   useEffect(() => {
     const f = e => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); setPaleta(p => !p); } if (e.key === 'Escape') setPaleta(false); };
@@ -188,7 +189,6 @@ export default function Dashboard({ datos: D, pronInicial }) {
       <aside>
         <div className="logo"><i>S</i><div><b>STANFORD</b><small>UNACH · Ciencia de Datos e IA</small></div></div>
         <nav>{SECC.map(([k, t]) => <a key={k} className={sec === k ? 'on' : ''} onClick={() => ir(k)}><svg viewBox="0 0 24 24" fill="currentColor"><path d={ICO[k]} /></svg><span>{t}</span></a>)}</nav>
-        <button className="busca" onClick={() => setPaleta(true)}>🔎 Buscar… <kbd>Ctrl K</kbd></button>
         <div className="pie">Fuente: ECU 911 (jul-2021 a sep-2026). Delitos explícitos según catálogo COIP (código 1). Los datos de Fiscalía aún no se incorporan.</div>
       </aside>
 
@@ -197,7 +197,6 @@ export default function Dashboard({ datos: D, pronInicial }) {
           <div><h1>Delitos en <span>Riobamba</span>: lo que pasó y lo que viene</h1>
             <div className="sub">Predicción semanal y tendencia hasta 2029, con foco en las parroquias rurales <b>Flores</b> y <b>Cubijíes</b>.</div></div>
           <div className="row" style={{ margin: 0 }}>
-            <button className="btn sec" onClick={() => setTour(true)}>❓ Guía</button>
             <button className="btn sec" onClick={() => setOscuro(!oscuro)}>{oscuro ? '☀️ Claro' : '🌙 Oscuro'}</button>
             <div className="chip" suppressHydrationWarning>{esc !== 'base' && <b style={{ color: 'var(--rojo)' }}>Escenario {ESC_INFO.find(x => x.k === esc)?.t} · </b>}{fuente === 'API' ? '🟢 API en vivo' : '⚪ Datos locales'} · {new Date(D.generado + 'T12:00').toLocaleDateString('es-EC', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
           </div>
@@ -243,36 +242,28 @@ export default function Dashboard({ datos: D, pronInicial }) {
                 </button>); })}
             </div>
 
-            <h2 className="h2">¿Qué quieres saber?</h2>
-            <div className="grid g4">
-              {[['🗺️', '¿Dónde hay más riesgo?', 'Mapa real con alertas por parroquia', 'mapa'], ['🚨', '¿Qué pasa en cada semana?', 'Qué se espera y dónde hay alerta', 'pron'], ['🔮', '¿Cómo será 2029?', 'Tendencia con rangos de confianza', 'tend'], ['✅', '¿Qué tan confiable es?', 'Qué tanto acierta el modelo', 'modelos']].map(([e, t, d, k]) => (
-                <button key={k} className="card tile" onClick={() => ir(k)}><span className="emo">{e}</span><b>{t}</b><span>{d}</span></button>))}
-            </div>
-
-            <h2 className="h2">Los números clave</h2>
-            <div className="grid g4">
-              <Kpi l="Delitos explícitos (COIP)" n={cod1.registros} d={`${cod1.pct} % de los registros del ECU 911`} c="var(--azul)" info="Delitos claros según el catálogo COIP de Sonia Calle (código 1). Es lo que predice el modelo." />
-              <Kpi l="Delitos en 2025" n={total[3]} d={`2029: ${fmt(total[7])} (${fmt((total[7] / total[3] - 1) * 100, 1)} %)`} c="var(--cian)" />
-              <Kpi l="Alertas altas en esa semana" n={altas.length} d={altas.length ? altas.map(a => nom(a.parroquia_corta)).join(', ') : 'ninguna'} c="var(--rojo)" info="Alta = el pronóstico supera el promedio de las últimas 52 semanas en el porcentaje que elijas en «Alertas y pronóstico»." />
-              <Kpi l="Error del modelo" n={res['Todas las parroquias']} dec={2} d="delitos por semana y parroquia" c="var(--verde)" info="MAE: cuántos delitos se equivoca el modelo, en promedio, por parroquia y semana." />
-            </div>
-            <div className="grid g21" style={{ marginTop: 16 }}>
-              <div className="card"><h3>Delitos por año en el cantón</h3><p className="n">Suma de las 12 parroquias. Desde 2026 incluye pronóstico.</p>
+            <h2 className="h2">Los delitos año por año</h2>
+            <div className="card"><h3>Delitos por año en el cantón</h3><p className="n">Suma de las 12 parroquias. Desde 2026 incluye pronóstico.</p>
                 <LineChart h={260} x={YRS} xlab={YRS.map((y, i) => [i, y])} corte={4} series={[{ n: 'Delitos', c: '#1f6fb2', y: total.map((v, i) => (i < 4 ? v : null)) }, { n: 'Pronóstico', c: '#e0533a', dash: 1, y: total.map((v, i) => (i >= 3 ? v : null)) }]} /></div>
-              <div className="card"><h3>¿Qué cuenta como delito aquí?</h3><p className="n">Clasificación COIP de Sonia Calle sobre todos los registros del ECU 911.</p>
-                <Barras items={D.codigo.map(c => ({ n: c.significado, v: c.registros, c: ['#c5d0da', '#1f6fb2', '#f0a829', '#9fb3c4'][c.codigo_coip] }))} />
-                <p className="n" style={{ marginTop: 12 }}>El modelo predice solo el <b>código 1</b> (delito explícito). La etiqueta «Delito» de nuestras reglas de palabras clave suma más (34.997) porque incluye también agresiones, daños y otros casos que Sonia deja como «posible» o «ambiguo»; ver «¿Qué cuenta como delito?».</p></div>
-            </div>
           </section>)}
 
         {sec === 'mapa' && (mat ? <MapaVivo datos={D} pron1={p1} semanas={semanas} sem={sem} setSem={elegir} mat={mat} sel={par} onSel={setPar} onTendencia={n => { setPar(n); ir('tend'); }} dark={oscuro} /> : <div className="card">Cargando mapa…</div>)}
 
-        {sec === 'pron' && <Pronostico D={D} pron={pron} p1={p1} semanas={semanas} sem={sem} setSem={elegir} umbral={umbral} setUmbral={setUmbral} onParroquia={verParroquia} />}
-        {sec === 'tend' && <Tendencia D={D} par={par} setPar={setPar} />}
-        {sec === 'modelos' && <Modelos D={D} />}
-        {sec === 'esc' && <Escenarios D={D} esc={esc} setEsc={setEsc} ir={ir} />}
-        {sec === 'abig' && <Abigeato D={D} />}
-        {sec === 'metodo' && <Metodo />}
+        {sec === 'pron' && <>
+          <Pronostico D={D} pron={pron} p1={p1} semanas={semanas} sem={sem} setSem={elegir} umbral={umbral} setUmbral={setUmbral} onParroquia={verParroquia} />
+          <h2 className="h2" id="tend" style={{ marginTop: 28 }}>🔮 Futuro hasta 2029</h2>
+          <Tendencia D={D} par={par} setPar={setPar} />
+        </>}
+        {sec === 'conf' && <>
+          <h2 className="h2" id="modelos">✅ ¿Qué tan confiable es?</h2>
+          <Modelos D={D} />
+          <h2 className="h2" id="esc" style={{ marginTop: 28 }}>📕 ¿Qué cuenta como delito?</h2>
+          <Escenarios D={D} esc={esc} setEsc={setEsc} ir={ir} />
+          <h2 className="h2" id="abig" style={{ marginTop: 28 }}>🐄 Abigeato</h2>
+          <Abigeato D={D} />
+          <h2 className="h2" id="metodo" style={{ marginTop: 28 }}>🧭 Método y límites</h2>
+          <Metodo />
+        </>}
       </main>
 
       <nav className="bottom">{SECC.slice(0, 5).map(([k, t]) => <a key={k} className={sec === k ? 'on' : ''} onClick={() => ir(k)}><svg viewBox="0 0 24 24" fill="currentColor"><path d={ICO[k]} /></svg>{t.split(' ')[0]}</a>)}</nav>
