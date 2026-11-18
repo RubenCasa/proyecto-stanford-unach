@@ -116,7 +116,7 @@ function Calor({ pron, sem, setSem, orden, desde }) {
   const [tip, setTip] = useState(null);
   return (
     <div className="card calor">
-      <h3>🔥 Las próximas semanas de un vistazo</h3>
+      <h3>Las próximas semanas de un vistazo</h3>
       <p className="n">Cada cuadro es una parroquia en una semana. <b style={{ color: '#17476b' }}>Azul</b> = menos de lo habitual, <b>gris</b> = normal (o diferencia dentro de la variación normal), <b style={{ color: '#a4452f' }}>rosado</b> = algo más, <b style={{ color: '#e0533a' }}>rojo</b> = alerta. El número es el pronóstico de delitos. Toca una columna para ver esa semana.</p>
       <div className="calor-wrap">
         <table>
@@ -206,7 +206,7 @@ export default function Dashboard({ datos: D, pronInicial }) {
           <section>
             <div className="grid g21">
               <div className="card hero story">
-                <h3>📌 En una frase</h3>
+                <h3>En una frase</h3>
                 <p>
                   <b>{sw.largo.charAt(0).toUpperCase() + sw.largo.slice(1)}</b> se esperan unos <b>{fmt(rio.prediccion)}</b> delitos en Riobamba. {altas.length ? <>Hay alerta alta en <b>{altas.map(a => nom(a.parroquia_corta)).join(' y ')}</b>.</> : <>No hay parroquias en alerta alta.</>} Hacia 2029 se espera un cantón <b>{total[7] < total[3] ? 'ligeramente a la baja' : 'estable o al alza'}</b>: {fmt(total[3])} delitos en 2025 → {fmt(total[7])} en 2029.
                 </p>
@@ -221,12 +221,12 @@ export default function Dashboard({ datos: D, pronInicial }) {
               <div className="card"><h3>Mapa rápido · semana {sw.corto}</h3><MiniMapa D={D} p1={p1} onSel={verParroquia} /></div>
             </div>
 
-            <h2 className="h2">📅 ¿Qué semana quieres ver?</h2>
+            <h2 className="h2">¿Qué semana quieres ver?</h2>
             <p className="n" style={{ margin: '-6px 0 12px' }}>Los datos del ECU 911 llegan hasta el domingo 27 de septiembre de 2026; desde ahí el modelo calcula hacia adelante, así que cuanto más lejana es la semana, más incierto es el pronóstico. Toca una semana y todo el tablero cambia.</p>
             <Semanas semanas={semanas} sem={sem} setSem={elegir} />
             <div className="caritas"><span>🙂 Todo tranquilo</span><span>😐 Atención</span><span>😟 Alerta</span></div>
 
-            <h2 className="h2">★ Las parroquias foco del proyecto</h2>
+            <h2 className="h2">Las parroquias foco del proyecto</h2>
             <div className="grid g2">
               {[cub, flo].map(p => { const [t, lv] = nivel(p.prob_al_menos_1), c = D.cambio.find(x => x.parroquia_corta === p.parroquia_corta); return (
                 <button key={p.parroquia_corta} className="card foco" onClick={() => verParroquia(p.parroquia_corta)}>
@@ -240,7 +240,7 @@ export default function Dashboard({ datos: D, pronInicial }) {
                 </button>); })}
             </div>
 
-            <h2 className="h2">🔥 Todo el panorama</h2>
+            <h2 className="h2">Todo el panorama</h2>
             <Calor pron={pron} sem={sw.h} setSem={elegir} orden={orden} desde={semanas[0].h} />
 
             <h2 className="h2">Los delitos año por año</h2>
@@ -252,17 +252,17 @@ export default function Dashboard({ datos: D, pronInicial }) {
 
         {sec === 'pron' && <>
           <Pronostico D={D} pron={pron} p1={p1} semanas={semanas} sem={sem} setSem={elegir} umbral={umbral} setUmbral={setUmbral} onParroquia={verParroquia} />
-          <h2 className="h2" id="tend" style={{ marginTop: 28 }}>🔮 Futuro hasta 2029</h2>
+          <h2 className="h2" id="tend" style={{ marginTop: 28 }}>Futuro hasta 2029</h2>
           <Tendencia D={D} par={par} setPar={setPar} />
         </>}
         {sec === 'conf' && <>
-          <h2 className="h2" id="modelos">✅ ¿Qué tan confiable es?</h2>
+          <h2 className="h2" id="modelos">¿Qué tan confiable es?</h2>
           <Modelos D={D} />
-          <h2 className="h2" id="esc" style={{ marginTop: 28 }}>📕 ¿Qué cuenta como delito?</h2>
+          <h2 className="h2" id="esc" style={{ marginTop: 28 }}>¿Qué cuenta como delito?</h2>
           <Escenarios D={D} esc={esc} setEsc={setEsc} ir={ir} />
-          <h2 className="h2" id="abig" style={{ marginTop: 28 }}>🐄 Abigeato</h2>
+          <h2 className="h2" id="abig" style={{ marginTop: 28 }}>Abigeato</h2>
           <Abigeato D={D} />
-          <h2 className="h2" id="metodo" style={{ marginTop: 28 }}>🧭 Método y límites</h2>
+          <h2 className="h2" id="metodo" style={{ marginTop: 28 }}>Método y límites</h2>
           <Metodo />
         </>}
       </main>
@@ -298,7 +298,7 @@ function Pronostico({ D, pron, p1, semanas, sem, setSem, umbral, setUmbral, onPa
   return (
     <section>
       <Guia e="🚦"><b>Qué estás viendo:</b> cuántos delitos se esperan en cada parroquia en la semana que elijas. <b>Rojo</b> 😟 = se espera bastante más de lo habitual, <b>amarillo</b> 😐 = atención, <b>verde</b> 🙂 = tranquilo. Toca una tarjeta para verla en el mapa.</Guia>
-      <h2 className="h2" style={{ marginTop: 0 }}>📅 Elige la semana</h2>
+      <h2 className="h2" style={{ marginTop: 0 }}>Elige la semana</h2>
       <Semanas semanas={semanas} sem={sem} setSem={setSem} />
       <h2 className="h2">Parroquia por parroquia · semana {(semanas.find(w => w.h === sem) || semanas[0]).corto}</h2>
       <div className="card" style={{ marginBottom: 16 }}>
