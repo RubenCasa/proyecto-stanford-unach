@@ -106,7 +106,7 @@ const colorCalor = (f) => {
   const { indice: i, alerta, prediccion: pr, media_52_semanas: me } = f;
   if (alerta === 'Alta') return ['#e0533a', '#fff'];
   if (alerta === 'Media') return ['#f4b740', '#3b2a00'];
-  const azar = Math.abs(pr - me) < 0.5 * Math.sqrt(Math.max(me, 0.1));   // diferencia dentro del azar: no se pinta
+  const azar = Math.abs(pr - me) < 0.5 * Math.sqrt(Math.max(me, 0.1));   // diferencia dentro de la variación normal: no se pinta
   if (!azar && i >= 108) return ['#f9dcd5', '#6b2a1c'];
   if (!azar && i <= 92) return ['#d6e8f6', '#17476b'];
   return ['#eef2f6', '#4a5d70'];
@@ -117,7 +117,7 @@ function Calor({ pron, sem, setSem, orden, desde }) {
   return (
     <div className="card calor">
       <h3>🔥 Las próximas semanas de un vistazo</h3>
-      <p className="n">Cada cuadro es una parroquia en una semana. <b style={{ color: '#17476b' }}>Azul</b> = menos de lo habitual, <b>gris</b> = normal (o diferencia dentro del azar), <b style={{ color: '#a4452f' }}>rosado</b> = algo más, <b style={{ color: '#e0533a' }}>rojo</b> = alerta. El número es el pronóstico de delitos. Toca una columna para ver esa semana.</p>
+      <p className="n">Cada cuadro es una parroquia en una semana. <b style={{ color: '#17476b' }}>Azul</b> = menos de lo habitual, <b>gris</b> = normal (o diferencia dentro de la variación normal), <b style={{ color: '#a4452f' }}>rosado</b> = algo más, <b style={{ color: '#e0533a' }}>rojo</b> = alerta. El número es el pronóstico de delitos. Toca una columna para ver esa semana.</p>
       <div className="calor-wrap">
         <table>
           <thead><tr><th />{hs.map(h => { const f = pron.find(p => p.horizonte === h); const w = semana(f.semana_inicio); return <th key={h} className={h === sem ? 'sel' : ''} onClick={() => setSem(h)}>{w.corto.split(' – ')[0]}</th>; })}</tr></thead>
@@ -234,7 +234,7 @@ export default function Dashboard({ datos: D, pronInicial }) {
                   <div style={{ flex: 1 }}>
                     <div className="row" style={{ margin: 0, justifyContent: 'space-between' }}><h3 style={{ margin: 0, fontSize: 20 }}>{nom(p.parroquia_corta)}</h3><Badge a={p.alerta} /></div>
                     <p style={{ margin: '6px 0', fontSize: 15, lineHeight: 1.5 }}>En esa semana es <b>{t}</b> que ocurra un delito.</p>
-                    <p className="n" style={{ margin: 0 }}>En 2025 hubo <b>{c['2025']}</b> delitos; hacia 2029 se esperan <b>{c['2029']}</b>{ruido(c) ? ': prácticamente igual (la diferencia cabe dentro del azar normal).' : <> ({c.cambio_2025_2029_pct > 0 ? '+' : ''}{c.cambio_2025_2029_pct} %).</>}</p>
+                    <p className="n" style={{ margin: 0 }}>En 2025 hubo <b>{c['2025']}</b> delitos; hacia 2029 se esperan <b>{c['2029']}</b>{ruido(c) ? ': prácticamente igual (la diferencia cabe dentro de la variación normal).' : <> ({c.cambio_2025_2029_pct > 0 ? '+' : ''}{c.cambio_2025_2029_pct} %).</>}</p>
                     <p className="n" style={{ margin: '6px 0 0', color: 'var(--azul)' }}>Ver en el mapa →</p>
                   </div>
                 </button>); })}
@@ -304,7 +304,7 @@ function Pronostico({ D, pron, p1, semanas, sem, setSem, umbral, setUmbral, onPa
       <div className="card" style={{ marginBottom: 16 }}>
         <div className="row" style={{ margin: 0, justifyContent: 'space-between' }}>
           <div style={{ flex: 1, minWidth: 260 }}><h3>¿Qué tan sensible quieres la alerta?<Info t="Índice = pronóstico / promedio de las últimas 52 semanas × 100. Alerta Alta si el índice supera 100 + el porcentaje elegido." /></h3>
-            <p className="n" style={{ margin: 0 }}>Alerta <b>Alta</b> cuando el pronóstico supera el promedio anual en <b>{umbral} %</b> o más <b>y</b> la diferencia es mayor que el azar normal (si es de menos de un delito, se queda en Normal). El servidor recalcula todo al mover la barra.</p></div>
+            <p className="n" style={{ margin: 0 }}>Alerta <b>Alta</b> cuando el pronóstico supera el promedio anual en <b>{umbral} %</b> o más <b>y</b> la diferencia es mayor que la variación normal (si es de menos de un delito, se queda en Normal). El servidor recalcula todo al mover la barra.</p></div>
           <div style={{ width: 280 }}><input type="range" min="5" max="60" step="5" value={umbral} onChange={e => setUmbral(+e.target.value)} /><div className="lim"><span>Más alertas</span><span>Menos alertas</span></div></div>
         </div>
       </div>
@@ -379,22 +379,22 @@ function Tendencia({ D, par, setPar }) {
         {grafico || <p className="n">Cargando…</p>}
         {modo === 'mes' && T && !/mes del año/i.test(T.serie.modelo) && (() => {
           const z = D.backtest.filter(b => b.zona === (par === 'RIOBAMBA' ? 'Urbana' : 'Rurales')), g = z.find(b => b.modelo === T.serie.modelo), e = z.find(b => /mes del año/i.test(b.modelo));
-          return <div className="aviso" style={{ marginTop: 12 }}>💡 <b>¿Por qué el pronóstico sale recto y antes tenía curvas?</b> Las curvas venían de un modelo que repite el patrón de cada mes. En las parroquias con pocos delitos ese patrón es casi puro azar (un mes con 4 casos no significa que se repita). Lo probamos con los últimos 24 meses: {g && e ? <>el modelo recto se equivocó <b>{fmt(g.MAE_mensual, 2)}</b> delitos por mes y el de curvas <b>{fmt(e.MAE_mensual, 2)}</b>, así que el recto acierta más.</> : 'el modelo recto acertó más.'} Por eso se usa la línea recta: es el nivel normal esperado. Si quieres ver cómo sería con curvas, activa «Ver patrón por mes (referencia)» (línea morada), sabiendo que acierta menos. La zona sombreada muestra que cualquier mes puede salir más alto o más bajo.</div>;
+          return <div className="aviso" style={{ marginTop: 12 }}>💡 <b>¿Por qué el pronóstico sale recto y antes tenía curvas?</b> Las curvas venían de un modelo que repite el patrón de cada mes. En las parroquias con pocos delitos ese patrón es casi pura variación impredecible (un mes con 4 casos no significa que se repita). Lo probamos con los últimos 24 meses: {g && e ? <>el modelo recto se equivocó <b>{fmt(g.MAE_mensual, 2)}</b> delitos por mes y el de curvas <b>{fmt(e.MAE_mensual, 2)}</b>, así que el recto acierta más.</> : 'el modelo recto acertó más.'} Por eso se usa la línea recta: es el nivel normal esperado. Si quieres ver cómo sería con curvas, activa «Ver patrón por mes (referencia)» (línea morada), sabiendo que acierta menos. La zona sombreada muestra que cualquier mes puede salir más alto o más bajo.</div>;
         })()}
         {modo !== 'mes' && <div className="aviso" style={{ marginTop: 12 }}>💡 <b>¿Por qué después de 2027 se ve casi recta?</b> Lejos en el tiempo el modelo solo puede proyectar el nivel normal de cada mes y una tendencia suave; los picos y valles del pasado no se pueden adivinar. Además, al sumar 12 meses se cancelan las diferencias entre meses. Recta no significa «no cambiará»: significa «no hay señal clara». Las sombras muestran cómo crece la incertidumbre.</div>}
         {T && modo !== 'comp' && (() => {
           const m = T.serie, por = Array(12).fill(0), cnt = Array(12).fill(0);
           m.mes.forEach((s, i) => { if (m.tipo[i] === 'Real') { por[+s.slice(5) - 1] += m.inc[i] || 0; cnt[+s.slice(5) - 1] += 1; } });
           const prom = por.map((v, i) => v / (cnt[i] || 1)), top = prom.map((v, i) => [v, i]).sort((a, b) => b[0] - a[0]).slice(0, 2).map(x => ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'][x[1]]);
-          return <div className="resumen">💬 <span>En <b>{nom(p)}</b> los delitos pasarían de <b>{fil['2025']}</b> en 2025 a <b>{fil['2029']}</b> en 2029 {ruido(fil) ? <>(se mantendría <b>estable</b>: la diferencia cabe dentro del azar normal)</> : <>({fil.cambio_2025_2029_pct > 0 ? 'sube' : 'baja'} {Math.abs(fil.cambio_2025_2029_pct)} %)</>}. {prom.some(v => v > 0) ? <>Históricamente los meses con más casos son <b>{top[0]}</b> y <b>{top[1]}</b>.</> : null}</span></div>;
+          return <div className="resumen">💬 <span>En <b>{nom(p)}</b> los delitos pasarían de <b>{fil['2025']}</b> en 2025 a <b>{fil['2029']}</b> en 2029 {ruido(fil) ? <>(se mantendría <b>estable</b>: la diferencia cabe dentro de la variación normal)</> : <>({fil.cambio_2025_2029_pct > 0 ? 'sube' : 'baja'} {Math.abs(fil.cambio_2025_2029_pct)} %)</>}. {prom.some(v => v > 0) ? <>Históricamente los meses con más casos son <b>{top[0]}</b> y <b>{top[1]}</b>.</> : null}</span></div>;
         })()}
       </div>
       <div className="grid g2" style={{ marginTop: 16 }}>
         <div className="card"><h3>Delitos por año · {nom(p)}</h3>
           <Tabla cols={[{ t: 'Año', f: r => r.a }, { t: 'Delitos', r: 1, f: r => fmt(r.v) }, { t: 'Tipo', f: r => r.t }]} rows={YRS.map(y => ({ a: y, v: fil[y], t: +y <= 2025 ? 'Real' : +y === 2026 ? 'Real + pronóstico' : 'Pronóstico' }))} /></div>
-        <div className="card"><h3>Cambio 2025 → 2029</h3><p className="n">Solo parroquias con 5 o más delitos en 2025. Las barras <b>grises</b> son cambios que caben dentro del azar normal (±2√n): no son una subida ni una bajada real.</p>
+        <div className="card"><h3>Cambio 2025 → 2029</h3><p className="n">Solo parroquias con 5 o más delitos en 2025. Las barras <b>grises</b> son cambios que caben dentro de la variación normal (±2√n): no son una subida ni una bajada real.</p>
           <Barras fmtv={v => fmt(v, 1) + ' %'} items={D.cambio.filter(c => c['2025'] >= 5).sort((a, b) => a.cambio_2025_2029_pct - b.cambio_2025_2029_pct).map(c => ({ n: `${nom(c.parroquia_corta)} (${c['2025']}→${c['2029']})`, v: Math.abs(c.cambio_2025_2029_pct), c: ruido(c) ? '#b8c4d1' : c.cambio_2025_2029_pct > 0 ? '#e0533a' : '#2f86b8' }))} />
-          <div className="leg"><span><i style={{ background: '#2f86b8' }} />Baja</span><span><i style={{ background: '#e0533a' }} />Sube</span><span><i style={{ background: '#b8c4d1' }} />Dentro del azar</span></div></div>
+          <div className="leg"><span><i style={{ background: '#2f86b8' }} />Baja</span><span><i style={{ background: '#e0533a' }} />Sube</span><span><i style={{ background: '#b8c4d1' }} />Variación normal</span></div></div>
       </div>
     </section>
   );
@@ -408,11 +408,11 @@ function Modelos({ D }) {
       <div className="aviso" style={{ marginBottom: 16 }}>Pregunta clave: <b>¿se puede confiar en el pronóstico?</b> Se reservó el último año (52 semanas) como prueba y se comparó lo predicho con lo que realmente pasó.</div>
       <div className="card" style={{ marginBottom: 16 }}>
         <h3>¿Puedo confiar en el pronóstico de cada parroquia?</h3>
-        <p className="n">Hay un error que ningún modelo puede evitar: el <b>azar</b> (un delito más o menos en una semana). Aquí se compara cuánto se equivocó nuestro modelo en el último año con ese <b>mínimo posible</b>. Si se parecen, el modelo ya acierta lo máximo que los datos permiten; <b>un error relativo alto en una parroquia pequeña no significa que el modelo esté mal</b>, sino que casi no hay casos que predecir.</p>
+        <p className="n">Hay un error que ningún modelo puede evitar: los delitos no son «al azar», pero dependen de decisiones y circunstancias que no quedan en los datos, y eso hace que un delito más o menos en una semana no se pueda anticipar (la <b>variación natural</b>). Aquí se compara cuánto se equivocó nuestro modelo en el último año con ese <b>mínimo posible</b>. Si se parecen, el modelo ya acierta lo máximo que los datos permiten; <b>un error relativo alto en una parroquia pequeña no significa que el modelo esté mal</b>, sino que casi no hay casos que predecir.</p>
         <div className="grid g3">{D.azar.map(r => { const k = r.MAE_modelo / Math.max(r.MAE_modelo_perfecto, 0.001), [t, c, ic] = k <= 1.15 ? ['Acierta lo máximo posible', '#3f9d6b', '🟢'] : k <= 1.35 ? ['Muy cerca del máximo', '#d08a00', '🟡'] : ['Aún hay margen', '#e0533a', '🟠'];
           return (
           <div className="conf" key={r.parroquia_corta} style={{ borderLeftColor: c }}><b>{nom(r.parroquia_corta)}</b><span style={{ color: c }}>{ic} {t}</span>
-            <i>se equivoca ≈ {fmt(r.MAE_modelo, 2)} delitos por semana · mínimo por azar ≈ {fmt(r.MAE_modelo_perfecto, 2)}</i>
+            <i>se equivoca ≈ {fmt(r.MAE_modelo, 2)} delitos por semana · mínimo posible ≈ {fmt(r.MAE_modelo_perfecto, 2)}</i>
             {r.media_semanal < 1 && <i style={{ display: 'block', marginTop: 2 }}>Pocos delitos ({fmt(r.media_semanal, 2)} por semana): usa la probabilidad, no el número exacto.</i>}</div>); })}</div>
       </div>
       <div className="grid g4">
@@ -427,7 +427,7 @@ function Modelos({ D }) {
         <div className="card"><h3>Predicho vs real (52 semanas de prueba)</h3>
           <Tabla cols={[{ t: 'Parroquia', f: r => nom(r.parroquia_corta) }, { t: 'Real', r: 1, f: r => fmt(r.real_total) }, { t: 'Predicho', r: 1, f: r => fmt(r.predicho_total) }, { t: 'MAE', r: 1, f: r => fmt(r.MAE, 2) }]} rows={D.rv} /></div>
       </div>
-      <div className="card" style={{ marginTop: 16 }}><h3>Límite del azar<Info t="Aun un modelo perfecto falla porque los delitos tienen una parte aleatoria." /></h3>
+      <div className="card" style={{ marginTop: 16 }}><h3>Mínimo de error posible<Info t="Ningún modelo acierta todo: los delitos dependen de decisiones y circunstancias que no quedan registradas en los datos, así que siempre queda una parte que no se puede anticipar." /></h3>
         <p className="n">«Error relativo» compara el error del modelo con el nivel semanal medio. En parroquias con casi cero delitos es alto por naturaleza.</p>
         <Tabla cols={[{ t: 'Parroquia', f: r => nom(r.parroquia_corta) }, { t: 'Media semanal', r: 1, f: r => fmt(r.media_semanal, 2) }, { t: 'MAE modelo perfecto', r: 1, f: r => fmt(r.MAE_modelo_perfecto, 2) }, { t: 'MAE modelo', r: 1, f: r => fmt(r.MAE_modelo, 2) }, { t: 'Error relativo', r: 1, f: r => fmt(r.error_relativo_pct, 0) + ' %' }]} rows={D.azar} /></div>
     </section>
@@ -491,7 +491,7 @@ function Escenarios({ D, esc, setEsc, ir }) {
           <ul className="lista">
             <li><b>Riobamba mejora un poco</b> al ampliar: el error relativo baja de {fila('Base (Sonia)')['Error relativo Riobamba %']} % a {fila('A+B')['Error relativo Riobamba %']} %.</li>
             <li><b>Flores y Cubijíes no mejoran</b>: tienen muy pocos casos por semana, y sumar tipos no ayuda.</li>
-            <li><b>Casi no hay alertas</b>: solo se marca una parroquia cuando el pronóstico supera al promedio por más de lo que explica el azar. En 12 semanas, con la base de Sonia hay {fila('Base (Sonia)')['Alertas (altas o medias, 12 semanas)']} alertas; con A, {fila('A')['Alertas (altas o medias, 12 semanas)']}; con A+B, {fila('A+B')['Alertas (altas o medias, 12 semanas)']}. Es decir, el modelo no espera nada fuera de lo normal.</li>
+            <li><b>Casi no hay alertas</b>: solo se marca una parroquia cuando el pronóstico supera al promedio por más de lo que explica la variación normal. En 12 semanas, con la base de Sonia hay {fila('Base (Sonia)')['Alertas (altas o medias, 12 semanas)']} alertas; con A, {fila('A')['Alertas (altas o medias, 12 semanas)']}; con A+B, {fila('A+B')['Alertas (altas o medias, 12 semanas)']}. Es decir, el modelo no espera nada fuera de lo normal.</li>
           </ul>
           <button className="btn sec" onClick={() => ir('pron')}>Ver alertas con esta definición →</button></div>
       </div>
