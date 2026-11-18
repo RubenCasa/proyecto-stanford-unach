@@ -2,7 +2,7 @@
 (function (root) {
   const L = {};
   const num = (v, d) => (v === undefined || v === '' || isNaN(+v) ? d : +v);
-  /* Alerta = el pronóstico supera el promedio de 52 semanas en el % elegido Y la diferencia es mayor que el azar normal
+  /* Alerta = el pronóstico supera el promedio de 52 semanas en el % elegido Y la diferencia es mayor que la variación normal
      (≈ √promedio, desviación de un conteo de Poisson). Evita alarmas por 0,2 delitos en parroquias con pocos casos. */
   L.alerta = (indice, umbral, pred, media) => {
     const azar = Math.sqrt(Math.max(media == null ? 0 : media, 0.1)), dif = pred == null || media == null ? Infinity : pred - media;

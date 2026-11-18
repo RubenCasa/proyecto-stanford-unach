@@ -6,7 +6,7 @@
 # Problema: predecir el número de incidentes DELICTIVOS (delitos explícitos del COIP, código 1 del catálogo,
 # definidos el día 14 en 07b_objetivo_delictivo.R) de la próxima semana en cada
 # parroquia de Riobamba. Métricas: MAE y RMSE.
-# Validación por fecha: el ÚLTIMO AÑO (52 semanas) es prueba; nunca al azar.
+# Validación por fecha: el ÚLTIMO AÑO (52 semanas) es prueba; siempre las semanas más recientes, nunca mezcladas.
 #
 # DÍA 14 [SONIA] distribución del objetivo · [RUBÉN] partición + modelo base y
 #        Poisson · [NELCY] tamaños · [MELANIE] objetivo y predictores
@@ -315,7 +315,7 @@ mejor_global <- resumen_metricas$modelo[1]
 print(resumen_metricas, n = Inf, width = Inf)
 message("\n>>> URBANA: ", elegido_urbana, "  ·  RURALES: ", elegido_rural)
 
-# ¿Cuánto error es inevitable? Si los casos ocurren al azar (Poisson), incluso un
+# ¿Cuánto error es inevitable? Los delitos no son «al azar», pero hay una parte que los datos no explican (se modela con Poisson); incluso un
 # modelo "perfecto" que conociera la media real de la semana tendría este MAE.
 # Sirve para juzgar a los modelos con justicia.
 piso_poisson <- function(l) { k <- 0:ceiling(l + 10 * sqrt(l) + 20); sum(abs(k - l) * dpois(k, l)) }
@@ -437,7 +437,7 @@ for (h in 1:12) {
 
 # Rango probable y alerta:
 #  - Urbana: predicción ± 1,28 × RMSE del año de prueba (80 %).
-#  - Rurales: rango Poisson del 80 % (con pocos casos el azar manda).
+#  - Rurales: rango Poisson del 80 % (con pocos casos la variación natural manda).
 #  - Índice = pronóstico / promedio de las últimas 52 semanas (100 = normal).
 #    Alerta alta si el índice >= 125; media si >= 110.
 rmse_urb <- tabla_metricas %>% filter(grupo == "Urbana (Riobamba)", modelo == elegido) %>% pull(RMSE)

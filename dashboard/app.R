@@ -266,7 +266,7 @@ ui <- page_sidebar(
                p(strong("Rurales: "), textOutput("m_rur", inline = TRUE)),
                p(class = "small text-muted",
                  "En Flores y Cubijíes los casos semanales son tan pocos que ni un modelo perfecto ",
-                 "podría acertar el número exacto: el error ya está cerca del límite del azar. ",
+                 "podría acertar el número exacto: el error ya está cerca del mínimo de error posible. ",
                  "Por eso se usan rangos, probabilidades y la tendencia mensual."))),
         card(card_header("Predicción vs. real en el año de prueba"),
              selectInput("modelo", NULL, choices = sort(unique(pred$modelo)),
