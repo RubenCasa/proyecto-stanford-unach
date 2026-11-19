@@ -1,6 +1,7 @@
-"""Regenera data.js del tablero web a partir de los resultados de R.
-Uso (desde la carpeta del proyecto):  python dashboard_web/actualizar_datos.py
-Requiere: pandas, openpyxl. Solo usa resultados agregados (sin datos personales)."""
+"""Regenera dashboard_next/data/data.json (datos del tablero publicado) a partir de los resultados de R.
+Uso (desde la carpeta del proyecto, después de correr los scripts 07b, 10, 12 y 13):
+    python scripts/actualizar_dashboard.py
+Requiere: pandas, openpyxl. Solo usa resultados agregados por parroquia (sin datos personales)."""
 import sqlite3, struct, json, pandas as pd, datetime as dt
 import os; U=os.path.join(os.path.dirname(os.path.abspath(__file__)),"..","03_resultados")+os.sep
 def x(f,s): return pd.read_excel(U+f,sheet_name=s)
@@ -97,15 +98,9 @@ cmp_["Alertas (altas o medias, 12 semanas)"]=cmp_["escenario"].map(_m)
 esc=dict(pron={"A":pron_esc("A"),"AB":pron_esc("AB"),**_pe},comparacion=cmp_.to_dict("records"),terminos=ter.to_dict("records"))
 D=dict(geo=feats,pron=pron,metricas=mae,resumen=res,azar=azar,rv=rv,variables=var,mensual=mens,cambio=cambio,backtest=back,
        codigo=cod,tipo=tipo,antes=av,porano=pa,abigeato=ab,esc=esc,generado=dt.date.today().isoformat())
-json.dump(D,open(os.path.join(os.path.dirname(os.path.abspath(__file__)),"data.tmp"),"w"),ensure_ascii=False,separators=(",",":"),default=str)
 import re
-base=os.path.dirname(os.path.abspath(__file__))
-d=open(os.path.join(base,"data.tmp"),encoding="utf8").read()
-d=re.sub(r"\bNaN\b","null",d)
-os.makedirs(os.path.join(base,"data"),exist_ok=True)
-open(os.path.join(base,"data","data.json"),"w",encoding="utf8").write(d)      # lo leen las funciones /api
-open(os.path.join(base,"data.js"),"w",encoding="utf8").write("window.DATA="+d+";")  # respaldo local
-nx=os.path.join(base,"..","dashboard_next","data")
-if os.path.isdir(nx): open(os.path.join(nx,"data.json"),"w",encoding="utf8").write(d)   # versión Next.js
-os.remove(os.path.join(base,"data.tmp"))
-print("OK -> data/data.json y data.js")
+s=json.dumps(D,ensure_ascii=False,separators=(",",":"),default=str)
+s=re.sub(r"\bNaN\b","null",s)
+dst=os.path.join(R,"dashboard_next","data","data.json")
+with open(dst,"w",encoding="utf8") as f: f.write(s)
+print("OK ->",os.path.normpath(dst))

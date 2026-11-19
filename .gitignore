@@ -1,29 +1,18 @@
-# Datos crudos ECU 911 (2,2 GB): se descargan de datosabiertos.gob.ec
-/emergencias_*.csv
-/incidentes_*.csv
-/incidentes_*.xlsx
-/formato-*.xlsx
-# Archivos grandes que se regeneran con los scripts
-02_datos_limpios/riobamba_depurada.csv
-04_mapas/gadm/
-# Datos de Fiscalía (nunca subir datos personales)
-01_datos_fiscalia/
-*fiscalia*.csv
-*fiscalia*.xlsx
-# R / RStudio
-.RData
-.Rhistory
-.Rproj.user/
-*.Rproj.user
-rsconnect/
-# Office / sistema
-~$*
-Thumbs.db
-.DS_Store
-_github/
+# El repositorio guarda solo el código: scripts de R y el tablero web.
+# Todo lo demás (datos, resultados, mapas, documentos) se queda en el computador
+# y se regenera con los scripts.
+/*
+!/.gitignore
+!/README.md
+!/proyecto_stanford.Rproj
+!/ejecutar_todo.R
+!/mostrar_resultados.R
+!/scripts/
+!/dashboard_next/
 
-# Copias locales y herramientas del editor (no se suben)
-_respaldo_local_*/
-.claude/
-.agents/
-_anexos_logs/
+# Nunca subir datos personales ni de Fiscalía
+*fiscalia*
+.Rhistory
+.RData
+.Rproj.user/
+~$*

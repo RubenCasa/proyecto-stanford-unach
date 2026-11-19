@@ -7,31 +7,25 @@ Zona de estudio: cantón Riobamba (Chimborazo), con foco en las parroquias **Flo
 
 ## Qué contiene
 
-| Carpeta | Contenido |
+El repositorio guarda solo el código. Los datos, resultados, mapas y documentos se generan en cada computador con los scripts.
+
+| Archivo o carpeta | Contenido |
 |---|---|
-| `scripts/` | Código R del proyecto, del 01 al 13 (importación → limpieza → EDA → objetivo delictivo (07b) → mapas → features → modelos → riesgo → tendencia 2029 → abigeato). `correr_escenarios.R` compara definiciones de delito. `_comun.R` tiene rutas y funciones compartidas. |
-| `revision/` | Revisión de modelos uno por uno (R0–R7) y sus salidas. |
-| `dashboard/` | Dashboard Shiny (`app.R`) y script de capturas. |
-| `02_datos_limpios/` | Bases depuradas en `.rds` y el Feature Store (lo necesario para el dashboard). |
-| `03_resultados/` | Gráficos, tablas y modelos (pronósticos, tendencia 2029). |
-| `04_mapas/` | Mapas interactivos y capas de parroquias (`.gpkg`). |
-| `05_documentos/` | Informe técnico, manuales, guía por estudiante, diccionarios, matriz y tablero de control. |
-| `reporte_EDA.qmd/.html` | Reporte exploratorio en Quarto. |
+| `scripts/` | Código R del proyecto, del 01 al 13 (importación → limpieza → EDA → objetivo delictivo (07b) → mapas → features → modelos → riesgo → tendencia 2029 → abigeato). `_comun.R` tiene rutas y funciones compartidas; `correr_escenarios.R` compara definiciones de delito; `actualizar_dashboard.py` pasa los resultados al tablero. |
+| `ejecutar_todo.R` | Corre todos los scripts en orden. |
+| `mostrar_resultados.R` | Muestra los gráficos de resultados en RStudio. |
+| `dashboard_next/` | Tablero web (Next.js) publicado en Vercel. |
 
 ## Cómo usarlo
 
-1. Clonar el repositorio (o *Code → Download ZIP*) y abrir `proyecto_stanford.Rproj` en RStudio.
+1. Clonar el repositorio y abrir `proyecto_stanford.Rproj` en RStudio.
 2. Instalar paquetes una sola vez: `source("scripts/00_instalar_paquetes.R")`.
-3. **Ver el dashboard** (no requiere los datos crudos):
-   ```r
-   shiny::runApp("dashboard", launch.browser = TRUE)
-   ```
-4. **Reproducir todo desde cero** (opcional): descargar las bases mensuales del ECU 911 desde
-   [datosabiertos.gob.ec](https://www.datosabiertos.gob.ec/) (archivos `emergencias_*.csv` 2021–2023 e `incidentes_*.csv/xlsx` 2024–2026),
-   copiarlas en la carpeta raíz del proyecto y ejecutar `source("ejecutar_todo.R")`.
-   Los datos crudos (≈2,2 GB) no se suben a GitHub por su tamaño.
-
-Más detalle en `LEEME_INSTRUCCIONES.txt` y en `05_documentos/Manual_tecnico_borrador.docx`.
+3. Descargar las bases mensuales del ECU 911 desde [datosabiertos.gob.ec](https://www.datosabiertos.gob.ec/)
+   (archivos `emergencias_*.csv` 2021–2023 e `incidentes_*.csv/xlsx` 2024–2026, ≈2,2 GB), copiarlas en la carpeta
+   raíz del proyecto y ejecutar `source("ejecutar_todo.R")`. Se crean `02_datos_limpios/`, `03_resultados/` y `04_mapas/`.
+4. Actualizar el tablero: `python scripts/actualizar_dashboard.py` (necesita pandas y openpyxl) y subir el cambio con `git push`.
+   Vercel vuelve a publicar solo (Root Directory = `dashboard_next`).
+5. Ver el tablero en el computador: `cd dashboard_next`, `npm install`, `npm run dev` → http://localhost:3000.
 
 ## Qué se predice (desde el 16-nov-2026)
 
@@ -40,8 +34,8 @@ el 14 % trámites (fichas de datos, boletas, resguardo de valores).
 La variable objetivo son los **delitos explícitos del COIP (código 1 del catálogo de Sonia Calle)** por parroquia y semana:
 27.316 registros, el 10,1 % de Seguridad Ciudadana (`scripts/07b_objetivo_delictivo.R`).
 Del 9 al 15 de noviembre el objetivo fue «delitos + convivencia y orden público»; se reemplazó por el catálogo COIP.
-Las definiciones ampliadas que propone el equipo (A, A+B y reglas del equipo) se comparan en `_escenarios/`
-con `scripts/correr_escenarios.R` y no reemplazan la base oficial.
+Las definiciones ampliadas que propone el equipo (A, A+B y reglas del equipo) se comparan con
+`scripts/correr_escenarios.R` (resultados en `_escenarios/`) y no reemplazan la base oficial.
 Lo que bajó entre 2021 y 2026 fueron sobre todo los pedidos de patrullaje; los delitos se mantienen.
 
 ## Resultados principales
@@ -69,4 +63,4 @@ git add scripts/mi_script.R
 git commit -m "Día X: descripción de mi aporte"
 git push
 ```
-Cada estudiante trabaja en los scripts de su día según `05_documentos/Guia_por_estudiante.docx`.
+Cada estudiante trabaja en los scripts de su día según la guía por estudiante (en la carpeta de documentos del proyecto).

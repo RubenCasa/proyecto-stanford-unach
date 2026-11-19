@@ -18,7 +18,7 @@ Next.js 15 (App Router) + React 19, sin librerías de gráficos ni de mapas: los
 - `components/Mapa.jsx`: mapa SVG de las 12 parroquias (capa `04_mapas/parroquias_riobamba.gpkg`).
 - `components/Charts.jsx`: líneas con rango, columnas y barras.
 - `lib/logica.js`: cálculos compartidos por la API y el navegador (alertas, tendencias).
-- `data/data.json`: resultados de R (se regeneran con `python dashboard_web/actualizar_datos.py`).
+- `data/data.json`: resultados de R (se regeneran con `python scripts/actualizar_dashboard.py`).
 
 ## Probar en el computador (Node 18.18 o superior)
 ```
@@ -32,5 +32,5 @@ Root Directory = `dashboard_next` (Framework: Next.js). Cada `git push` a `main`
 
 ## Actualizar los números
 1. Correr los scripts de R (07b, 10, 12 y 13 como mínimo).
-2. `python dashboard_web/actualizar_datos.py` (escribe también `dashboard_next/data/data.json`).
+2. `python scripts/actualizar_dashboard.py` (escribe `dashboard_next/data/data.json`).
 3. Subir los cambios con `git push`.
