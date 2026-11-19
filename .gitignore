@@ -21,3 +21,9 @@ rsconnect/
 Thumbs.db
 .DS_Store
 _github/
+
+# Copias locales y herramientas del editor (no se suben)
+_respaldo_local_*/
+.claude/
+.agents/
+_anexos_logs/

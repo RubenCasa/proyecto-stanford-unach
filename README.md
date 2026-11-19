@@ -9,7 +9,7 @@ Zona de estudio: cantón Riobamba (Chimborazo), con foco en las parroquias **Flo
 
 | Carpeta | Contenido |
 |---|---|
-| `scripts/` | Código R del proyecto, del 01 al 12 (importación → limpieza → EDA → objetivo delictivo (07b) → mapas → features → modelos → riesgo → tendencia 2029). `_comun.R` tiene rutas y funciones compartidas. |
+| `scripts/` | Código R del proyecto, del 01 al 13 (importación → limpieza → EDA → objetivo delictivo (07b) → mapas → features → modelos → riesgo → tendencia 2029 → abigeato). `correr_escenarios.R` compara definiciones de delito. `_comun.R` tiene rutas y funciones compartidas. |
 | `revision/` | Revisión de modelos uno por uno (R0–R7) y sus salidas. |
 | `dashboard/` | Dashboard Shiny (`app.R`) y script de capturas. |
 | `02_datos_limpios/` | Bases depuradas en `.rds` y el Feature Store (lo necesario para el dashboard). |
@@ -33,19 +33,25 @@ Zona de estudio: cantón Riobamba (Chimborazo), con foco en las parroquias **Flo
 
 Más detalle en `LEEME_INSTRUCCIONES.txt` y en `05_documentos/Manual_tecnico_borrador.docx`.
 
-## Qué se predice (desde el día 14, 9-nov-2026)
+## Qué se predice (desde el 16-nov-2026)
 
-Seguridad Ciudadana del ECU 911 mezcla hechos con pedidos de servicio y trámites. Solo cerca del 13 % son delitos:
-el 46 % son pedidos de patrullaje y alarmas, el 16 % trámites (fichas de datos, boletas, resguardo de valores).
-Por eso la variable objetivo es **incidentes delictivos = delitos + convivencia y orden público** por parroquia y semana
-(`scripts/07b_objetivo_delictivo.R`). Lo que bajó entre 2021 y 2026 fueron sobre todo los pedidos de patrullaje (de 82 a 52 por día) y, hasta 2023,
-la convivencia; los delitos se mantienen (entre 16 y 21 por día en el cantón).
+Seguridad Ciudadana del ECU 911 mezcla hechos con pedidos de servicio y trámites: el 46 % son pedidos de patrullaje y alarmas,
+el 14 % trámites (fichas de datos, boletas, resguardo de valores).
+La variable objetivo son los **delitos explícitos del COIP (código 1 del catálogo de Sonia Calle)** por parroquia y semana:
+27.316 registros, el 10,1 % de Seguridad Ciudadana (`scripts/07b_objetivo_delictivo.R`).
+Del 9 al 15 de noviembre el objetivo fue «delitos + convivencia y orden público»; se reemplazó por el catálogo COIP.
+Las definiciones ampliadas que propone el equipo (A, A+B y reglas del equipo) se comparan en `_escenarios/`
+con `scripts/correr_escenarios.R` y no reemplazan la base oficial.
+Lo que bajó entre 2021 y 2026 fueron sobre todo los pedidos de patrullaje; los delitos se mantienen.
 
 ## Resultados principales
 
 - Unidad de análisis: parroquia × semana. Prueba: últimas 52 semanas; validación temporal en 5 pliegues.
-- Pronóstico de 4 semanas con modelo elegido por zona (urbana: RF + XGBoost + BinNeg; rural: Poisson + promedio 12 semanas), rangos probables y alertas (índice ≥110 media, ≥125 alta).
-- Tendencia mensual hasta diciembre de 2029 seleccionada por backtest de 24 meses.
+- Pronóstico de 12 semanas con modelo elegido por zona (Riobamba urbana: random forest ajustado; parroquias rurales: binomial negativa), con rango probable y probabilidad de al menos un delito.
+- Error medio: 1,49 delitos por parroquia y semana (≈ 12 % del nivel semanal en Riobamba). Supera a «igual que la semana pasada» (1,84) y por poco al promedio de 12 semanas (1,55): con tan pocos casos rurales el modelo ya está cerca del mínimo de error posible.
+- Alertas: índice = pronóstico / promedio de 52 semanas × 100; *alta* si supera 125 **y** la diferencia es mayor que la variación normal (≈ √promedio); *media* con la mitad de ambos umbrales.
+- Tendencia mensual hasta diciembre de 2029 seleccionada por backtest de 24 meses (urbana: promedio por mes del año; rurales: ETS con tendencia amortiguada). En las rurales no hay una tendencia detectable: el pronóstico es el nivel normal.
+- Tablero público: `dashboard_next/` (Next.js, publicado en Vercel).
 
 ## Datos y privacidad
 

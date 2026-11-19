@@ -11,8 +11,10 @@
 # DÍA 14 [SONIA]   Subtipos relevantes: tipo de registro de cada subtipo.
 #        [MELANIE] Diccionario: definición de tipo_registro y de la nueva
 #                  variable objetivo.
-#        [RUBÉN]   Nueva variable objetivo: incidentes delictivos
-#                  (delitos + convivencia) por parroquia y semana.
+#        [RUBÉN]   Nueva variable objetivo por parroquia y semana. Del 9 al
+#                  15-nov fue «delitos + convivencia»; desde el 16-nov son
+#                  SOLO los delitos explícitos del COIP (código 1 del
+#                  catálogo de Sonia, ver la sección [SONIA] 16-nov).
 #        [NELCY]   Verifica que no se pierda ningún registro al reclasificar.
 # DÍA 15 [SONIA]   Tendencia por tipo de registro (lo que realmente bajó).
 #
