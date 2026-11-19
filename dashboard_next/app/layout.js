@@ -1,4 +1,5 @@
 import { Public_Sans } from 'next/font/google';
+import 'leaflet/dist/leaflet.css';
 import './globals.css';
 
 const sans = Public_Sans({ subsets: ['latin'], weight: ['400', '500', '600', '700', '800'], display: 'swap', variable: '--font' });

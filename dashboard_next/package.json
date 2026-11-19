@@ -3,8 +3,13 @@
   "version": "3.0.0",
   "private": true,
   "description": "Tablero predictivo de delitos · Riobamba · Proyecto STANFORD (UNACH)",
-  "scripts": { "dev": "next dev", "build": "next build", "start": "next start" },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
   "dependencies": {
+    "leaflet": "^1.9.4",
     "next": "^15.1.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"

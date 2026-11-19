@@ -3,19 +3,21 @@
 Tablero público del proyecto: pronóstico semanal y tendencia a 2029 de delitos explícitos (COIP) en el cantón Riobamba,
 con foco en Flores y Cubijíes. Solo usa resultados agregados por parroquia (sin datos personales ni de Fiscalía).
 
-Next.js 15 (App Router) + React 19, sin librerías de gráficos ni de mapas: los gráficos y el mapa de parroquias se dibujan en SVG.
+Next.js 15 (App Router) + React 19 + Leaflet. Los mapas usan Leaflet sobre mapas base de Esri (gris claro, gris oscuro y satélite, sin clave); los gráficos se dibujan en SVG sin librerías.
 
 ## Secciones
 - **Esta semana**: una frase con lo que se espera, las parroquias foco, el mapa con el estado de cada parroquia y la lista.
+- **Mapas**: cinco capas sobre el mismo mapa (estado de la semana, probabilidad de un delito, delitos por km² mes a mes 2022–2029 con reproducción, cambio hacia 2029 y abigeato) y un ranking de parroquias.
 - **Parroquias**: todo sobre un lugar (próximas semanas, mes a mes hasta 2029, años, confiabilidad del modelo).
-- **Hacia 2029**: total del cantón por año y cambio 2025→2029 por parroquia.
+- **Hacia 2029**: mapa del cambio 2025→2029, total del cantón por año y cambio por parroquia.
 - **Cómo se calcula**: qué cuenta como delito, otras definiciones (escenarios A, A+B y reglas del equipo), sensibilidad de la alerta, confiabilidad, abigeato, método y límites.
 
 ## Estructura
 - `app/page.js`: el servidor entrega los datos y las alertas iniciales.
 - `app/api/{datos,pronostico,tendencia,mapa,resumen}/route.js`: API (`/api/pronostico?umbral=25&esc=A`, `/api/tendencia?parroquia=CUBIJIES`…).
 - `components/Dashboard.jsx`: las cuatro secciones.
-- `components/Mapa.jsx`: mapa SVG de las 12 parroquias (capa `04_mapas/parroquias_riobamba.gpkg`).
+- `components/MapaLeaflet.jsx`: mapa Leaflet de las 12 parroquias (geometría de `04_mapas/parroquias_riobamba.gpkg`), con fondo normal o satélite.
+- `lib/mapas.js`: escalas de color de los mapas (tema claro y oscuro).
 - `components/Charts.jsx`: líneas con rango, columnas y barras.
 - `lib/logica.js`: cálculos compartidos por la API y el navegador (alertas, tendencias).
 - `data/data.json`: resultados de R (se regeneran con `python scripts/actualizar_dashboard.py`).

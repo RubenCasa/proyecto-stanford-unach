@@ -167,15 +167,81 @@ main { max-width: 1180px; margin: 0 auto; padding: 8px 16px 48px; }
 .mapa-lista { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 32px; }
 .leyenda { display: flex; flex-wrap: wrap; gap: 14px; font-size: 13.5px; color: var(--mut); }
 .leyenda span { display: inline-flex; align-items: center; gap: 6px; }
-.mapa svg { width: 100%; height: auto; max-height: var(--alto); display: block; margin: 0 auto; }
-.pq { stroke: var(--surface); stroke-width: 1.4; stroke-linejoin: round; cursor: pointer; transition: opacity .15s, stroke-width .15s; outline: none; }
-.pq.foco { stroke: var(--ink); stroke-width: 1.8; stroke-dasharray: 5 3; }
-.pq.dim { opacity: .5; }
-.pq:hover, .pq:focus-visible, .pq.sel { stroke: var(--ink); stroke-width: 2.6; stroke-dasharray: none; opacity: 1; }
-.et { pointer-events: none; text-anchor: middle; }
-.et-n { font-size: 17px; font-weight: 650; fill: var(--ink); paint-order: stroke; stroke: var(--surface); stroke-width: 3px; stroke-opacity: .85; }
-.et-v { font-size: 15px; font-weight: 600; fill: var(--mut); paint-order: stroke; stroke: var(--surface); stroke-width: 3px; stroke-opacity: .85; }
-.et.on .et-n { font-size: 19px; }
+
+/* ---------- mapas Leaflet ---------- */
+.lmapa { container-type: inline-size; position: relative; isolation: isolate; z-index: 0; border-radius: 12px; overflow: hidden; background: var(--surface2); box-shadow: inset 0 0 0 1px var(--line); }
+.lm-vacio, .lm-carga { display: grid; place-items: center; color: var(--mut); font-size: 14.5px; }
+.lm-vacio { height: 460px; }
+.lm-carga { position: absolute; inset: 0; z-index: 500; }
+.lmapa-c { position: absolute; inset: 0; background: var(--surface2); font-family: inherit; }
+.lmapa .leaflet-container { font: inherit; background: var(--surface2); }
+.lmapa .leaflet-interactive { cursor: pointer; transition: fill-opacity .15s; }
+.lmapa .leaflet-control-zoom { border: 0; box-shadow: var(--shadow); border-radius: 10px; overflow: hidden; margin: 12px 12px 0 0; }
+.lmapa .leaflet-control-zoom a { background: var(--surface); color: var(--ink); border-color: var(--line); width: 34px; height: 34px; line-height: 32px; }
+.lmapa .leaflet-control-zoom a:hover { background: var(--surface2); }
+.lmapa .leaflet-control-attribution { background: color-mix(in srgb, var(--surface) 80%, transparent); color: var(--mut); font-size: 10.5px; }
+.lmapa .leaflet-control-attribution a { color: var(--mut); }
+.lm-et { background: none; border: 0; box-shadow: none; padding: 0; text-align: center; line-height: 1.15; pointer-events: none; }
+.lm-et::before { display: none; }
+.lm-et b, .lm-et span { display: block; white-space: nowrap; text-shadow: 0 0 3px var(--surface), 0 0 3px var(--surface), 0 0 6px var(--surface); }
+.lm-et b { font-size: 12.5px; font-weight: 700; color: var(--ink); }
+.lm-et span { font-size: 11.5px; font-weight: 600; color: var(--mut); }
+.lm-ctl { position: absolute; top: 12px; left: 12px; z-index: 600; display: flex; gap: 8px; }
+.lm-ctl .seg { box-shadow: var(--shadow); background: var(--surface); }
+.lm-todo { background: var(--surface); box-shadow: var(--shadow); border-radius: 10px; padding: 0 12px; font-size: 14px; font-weight: 550; color: var(--ink); }
+.lm-todo:hover { background: var(--surface2); }
+.lm-info {
+  position: absolute; left: 12px; bottom: 12px; z-index: 600; max-width: min(340px, calc(100% - 24px));
+  background: var(--surface); border-radius: 12px; box-shadow: var(--shadow); padding: 10px 14px; font-size: 14px;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px;
+}
+.lm-info .mut { color: var(--mut); }
+.lmi-t { font-size: 15.5px; }
+.lmi-f { flex-basis: 100%; color: var(--mut); }
+.lmi-f b { color: var(--ink); }
+.lm-ley {
+  position: absolute; right: 12px; bottom: 26px; z-index: 600; display: grid; gap: 4px;
+  background: var(--surface); border-radius: 12px; box-shadow: var(--shadow); padding: 10px 12px; font-size: 12.5px; color: var(--mut);
+}
+.lm-ley span { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+.lm-ley i { width: 14px; height: 10px; border-radius: 3px; flex: none; }
+.lm-ley .d-foco { width: 14px; height: 10px; }
+.lm-falla { position: absolute; top: 56px; left: 12px; right: 12px; z-index: 600; background: var(--warn-bg); color: var(--ink); border-radius: 10px; padding: 8px 12px; font-size: 13.5px; }
+
+@container (max-width: 520px) { .lm-et-chica { display: none; } .lm-et b { font-size: 11.5px; } .lm-et span { font-size: 10.5px; } }
+
+/* pestaña Mapas */
+.capas { display: flex; gap: 8px; flex-wrap: wrap; }
+.capas button { padding: 9px 16px; border-radius: 999px; font-size: 15px; font-weight: 600; color: var(--mut); background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); transition: background-color .15s, color .15s, box-shadow .15s; }
+.capas button:hover { color: var(--ink); box-shadow: inset 0 0 0 1px var(--line2); }
+.capas button.on { color: var(--bg); background: var(--acc); box-shadow: none; }
+.mapas-g { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 28px; }
+.mapa-cab { display: grid; gap: 12px; margin-bottom: 14px; }
+.mapa-cab .nota { margin: 0; }
+.mapas-l h2 { font-size: 16px; margin-bottom: 8px; color: var(--mut); font-weight: 650; }
+.mapas-l ol { list-style: none; margin: 0; padding: 0; }
+.mapas-l button { width: 100%; display: grid; grid-template-columns: 12px 1fr auto; align-items: center; gap: 10px; padding: 8px 8px; border-radius: 8px; font-size: 14.5px; transition: background-color .12s; }
+.mapas-l button:hover, .mapas-l button:focus-visible { background: var(--sel); }
+.mapas-l i { width: 12px; height: 12px; border-radius: 3px; }
+.mapas-l b { font-size: 14px; white-space: nowrap; }
+.mapas-l .tag-foco { margin-left: 6px; }
+.tiempo { display: flex; align-items: center; gap: 14px; max-width: 620px; }
+.btn-play { width: 44px; height: 44px; flex: none; border-radius: 50%; display: grid; place-items: center; background: var(--acc); color: var(--bg); transition: transform .12s; }
+.btn-play:active { transform: scale(.94); }
+.tiempo-r { flex: 1; }
+.tiempo-t { display: flex; align-items: center; gap: 10px; font-size: 16px; }
+.tag-t { font-size: 12px; font-weight: 650; padding: 1px 8px; border-radius: 999px; background: var(--ok-bg); color: var(--ok); }
+.tag-t.fut { background: color-mix(in srgb, var(--acc2) 18%, transparent); color: var(--acc2); }
+@media (max-width: 960px) {
+  .mapas-g { grid-template-columns: 1fr; }
+  .mapas-l ol { display: grid; grid-template-columns: 1fr 1fr; column-gap: 12px; }
+}
+@media (max-width: 720px) {
+  .lmapa .leaflet-control-zoom { display: none; }
+  .lm-ley { bottom: auto; top: 56px; font-size: 11.5px; padding: 8px 10px; }
+  .lm-info { bottom: 22px; }
+  .mapas-l ol { grid-template-columns: 1fr; }
+}
 
 .lista-p { list-style: none; margin: 0; padding: 0; }
 .lista-p li + li { border-top: 1px solid var(--line); }

@@ -1,11 +1,16 @@
 'use client';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { Barras, Columnas, LineChart } from './Charts';
-import Mapa from './Mapa';
 import { api } from '../lib/api';
-import { ESTADO, FOCO, esFoco, fmt, fmtN, mesTxt, nom, probTxt, ruido, semana } from '../lib/util';
+import LOG from '../lib/logica';
+import { PAL, clase, leyendaSec } from '../lib/mapas';
+import { ESTADO, FOCO, esFoco, fmt, fmtN, mesLargo, mesTxt, nom, probTxt, ruido, semana } from '../lib/util';
 
-const TABS = [['semana', 'Esta semana'], ['parroquias', 'Parroquias'], ['futuro', 'Hacia 2029'], ['metodo', 'Cómo se calcula']];
+/* Leaflet solo funciona en el navegador */
+const MapaLeaflet = dynamic(() => import('./MapaLeaflet'), { ssr: false, loading: () => <div className="lmapa lm-vacio">Cargando mapa…</div> });
+
+const TABS = [['semana', 'Esta semana'], ['mapas', 'Mapas'], ['parroquias', 'Parroquias'], ['futuro', 'Hacia 2029'], ['metodo', 'Cómo se calcula']];
 const YRS = ['2022', '2023', '2024', '2025', '2026', '2027', '2028', '2029'];
 const ORD = { Alta: 0, Media: 1, Normal: 2 };
 const ESC_INFO = [
@@ -63,6 +68,13 @@ export default function Dashboard({ datos: D, pronInicial }) {
     if (!tema) return; document.documentElement.dataset.theme = tema;
     try { localStorage.setItem('tema', tema); } catch { /* sin almacenamiento */ }
   }, [tema]);
+  /* tema efectivo (elegido o del sistema): los mapas cambian su fondo y colores */
+  const [oscuro, setOscuro] = useState(false);
+  useEffect(() => {
+    const mq = matchMedia('(prefers-color-scheme: dark)');
+    const f = () => setOscuro(tema ? tema === 'dark' : mq.matches);
+    f(); mq.addEventListener('change', f); return () => mq.removeEventListener('change', f);
+  }, [tema]);
   useEffect(() => {
     let vivo = true;
     api('pronostico', { umbral, esc: esc === 'base' ? '' : esc }, D).then(r => { if (vivo) { setPron(r.data.filas); setFuente(r.fuente); } });
@@ -117,9 +129,10 @@ export default function Dashboard({ datos: D, pronInicial }) {
       )}
 
       <main id="contenido">
-        {tab === 'semana' && <Semana D={D} pron={pron} p1={p1} semanas={semanas} sw={sw} setSem={setSem} verParroquia={verParroquia} ir={ir} />}
-        {tab === 'parroquias' && <Parroquia D={D} pron={pron} p1={p1} sw={sw} semanas={semanas} setSem={setSem} par={par} setPar={setPar} />}
-        {tab === 'futuro' && <Futuro D={D} verParroquia={verParroquia} />}
+        {tab === 'semana' && <Semana D={D} pron={pron} p1={p1} semanas={semanas} sw={sw} setSem={setSem} verParroquia={verParroquia} ir={ir} oscuro={oscuro} />}
+        {tab === 'mapas' && <Mapas D={D} p1={p1} semanas={semanas} sw={sw} setSem={setSem} verParroquia={verParroquia} oscuro={oscuro} />}
+        {tab === 'parroquias' && <Parroquia D={D} pron={pron} p1={p1} sw={sw} semanas={semanas} setSem={setSem} par={par} setPar={setPar} oscuro={oscuro} />}
+        {tab === 'futuro' && <Futuro D={D} verParroquia={verParroquia} oscuro={oscuro} />}
         {tab === 'metodo' && <Metodo D={D} pron={pron} sw={sw} esc={esc} setEsc={setEsc} umbral={umbral} setUmbral={setUmbral} />}
       </main>
 
@@ -132,7 +145,16 @@ export default function Dashboard({ datos: D, pronInicial }) {
 }
 
 /* ---------- 1. Esta semana ---------- */
-function Semana({ D, p1, semanas, sw, setSem, verParroquia, ir }) {
+/* Recuadro del mapa con el pronóstico de una parroquia en la semana elegida */
+function infoSemana(p) {
+  if (!p) return null;
+  return (<>
+    <b className="lmi-t">{nom(p.parroquia_corta)}</b><Estado a={p.alerta} chico />
+    <div className="lmi-f">{p.media_52_semanas < 1 ? <>Probabilidad de al menos un delito: <b>{fmt(p.prob_al_menos_1)} %</b></> : <>Se esperan <b>{fmtN(p.prediccion)}</b> delitos (habitual {fmtN(p.media_52_semanas)})</>}</div>
+  </>);
+}
+
+function Semana({ D, p1, semanas, sw, setSem, verParroquia, ir, oscuro }) {
   const total = p1.reduce((s, p) => s + p.prediccion, 0), habitual = p1.reduce((s, p) => s + p.media_52_semanas, 0);
   const dif = (total / habitual - 1) * 100;
   const altas = p1.filter(p => p.alerta === 'Alta'), medias = p1.filter(p => p.alerta === 'Media');
@@ -173,12 +195,14 @@ function Semana({ D, p1, semanas, sw, setSem, verParroquia, ir }) {
 
       <section className="panel mapa-lista">
         <div className="ml-mapa">
-          <div className="ml-cab">
-            <h2>Mapa de la semana</h2>
-            <div className="leyenda">{['Normal', 'Media', 'Alta'].map(a => <span key={a}><i className={`d-${a}`} />{ESTADO[a].t}</span>)}<span><i className="d-foco" />Foco</span></div>
-          </div>
-          <Mapa geo={D.geo} sel={sel} onSel={verParroquia} color={n => `var(--m-${porNom[n]?.alerta || 'Normal'})`} etiqueta={n => porNom[n] ? fmtN(porNom[n].prediccion) : ''} />
-          <p className="nota">El número es cuántos delitos se esperan en la semana. Toca una parroquia para ver su detalle.</p>
+          <div className="ml-cab"><h2>Mapa de la semana</h2></div>
+          <MapaLeaflet geo={D.geo} sel={sel} atenuar={false} onSel={verParroquia} oscuro={oscuro} alto={500} titulo="Mapa del estado de cada parroquia en la semana elegida"
+            color={n => PAL.estado[oscuro ? 'oscuro' : 'claro'][porNom[n]?.alerta || 'Normal']}
+            etiqueta={n => porNom[n] ? fmtN(porNom[n].prediccion) : ''} info={n => infoSemana(porNom[n])}
+            leyenda={['Normal', 'Media', 'Alta'].map(a => [ESTADO[a].t, PAL.estado[oscuro ? 'oscuro' : 'claro'][a]])}>
+            <span><i className="d-foco" />Foco</span>
+          </MapaLeaflet>
+          <p className="nota">El número bajo cada nombre es cuántos delitos se esperan en la semana. Toca una parroquia para ver su detalle; en «Mapas» hay más capas.</p>
         </div>
         <div className="ml-lista">
           <div className="ml-cab"><h2>Parroquia por parroquia</h2><button className="enlace" onClick={csv}><Icono d={I.bajar} />CSV</button></div>
@@ -209,7 +233,7 @@ function Semana({ D, p1, semanas, sw, setSem, verParroquia, ir }) {
 }
 
 /* ---------- 2. Parroquias ---------- */
-function Parroquia({ D, pron, p1, sw, semanas, setSem, par, setPar }) {
+function Parroquia({ D, pron, p1, sw, semanas, setSem, par, setPar, oscuro }) {
   const orden = ['RIOBAMBA', ...FOCO, ...Object.keys(D.mensual).filter(n => n !== 'RIOBAMBA' && !FOCO.includes(n)).sort()];
   const p = p1.find(x => x.parroquia_corta === par), g = D.geo.find(x => x.nom === par), c = D.cambio.find(x => x.parroquia_corta === par);
   const az = D.azar.find(x => x.parroquia_corta === par), ser = D.mensual[par];
@@ -268,6 +292,14 @@ function Parroquia({ D, pron, p1, sw, semanas, setSem, par, setPar }) {
         </div>
 
         <section className="panel">
+          <h2>Dónde queda</h2>
+          <p className="nota">{nom(par)} resaltada sobre el mapa del cantón. Toca otra parroquia para cambiar; con «Satélite» se ve el terreno.</p>
+          <MapaLeaflet geo={D.geo} sel={par} onSel={setPar} oscuro={oscuro} alto={340} enfocar nombres atenuar={false} titulo={`Ubicación de ${nom(par)}`}
+            color={n => (n === par ? (oscuro ? '#62a0d4' : '#2f78b7') : oscuro ? '#3a434d' : '#d9d4c9')}
+            info={n => { const q = p1.find(x => x.parroquia_corta === n), gg = D.geo.find(x => x.nom === n); return <><b className="lmi-t">{nom(n)}</b>{q && <Estado a={q.alerta} chico />}<div className="lmi-f">{n2(gg.area)} km² · {fmt(D.cambio.find(x => x.parroquia_corta === n)['2025'])} delitos en 2025</div></>; }} />
+        </section>
+
+        <section className="panel">
           <h2>Las próximas semanas</h2>
           {pocos ? <>
           <p className="nota">Probabilidad de que ocurra al menos un delito en cada semana. Con tan pocos casos, esta es la forma más honesta de leer el pronóstico. La semana elegida está marcada.</p>
@@ -316,7 +348,17 @@ function Parroquia({ D, pron, p1, sw, semanas, setSem, par, setPar }) {
 const n2 = v => fmt(v, v < 100 ? 1 : 0);
 
 /* ---------- 3. Hacia 2029 ---------- */
-function Futuro({ D, verParroquia }) {
+/* Color del cambio 2025→2029 (gris si cabe en la variación normal) */
+const colCambio = (c, oscuro) => {
+  const P = PAL.cambio[oscuro ? 'oscuro' : 'claro'], v = c.cambio_2025_2029_pct;
+  if (c['2025'] < 5 || ruido(c)) return P.estable;
+  return v > 10 ? P.subeMucho : v > 0 ? P.sube : v > -10 ? P.baja : P.bajaMucho;
+};
+const leyCambio = oscuro => { const P = PAL.cambio[oscuro ? 'oscuro' : 'claro']; return [['Sube más de 10 %', P.subeMucho], ['Sube hasta 10 %', P.sube], ['Estable', P.estable], ['Baja hasta 10 %', P.baja], ['Baja más de 10 %', P.bajaMucho]]; };
+const txtCambio = c => (c['2025'] < 5 ? 'pocos casos' : ruido(c) ? 'estable' : `${c.cambio_2025_2029_pct > 0 ? '+' : ''}${fmt(c.cambio_2025_2029_pct)} %`);
+const infoCambio = c => <><b className="lmi-t">{nom(c.parroquia_corta)}</b><div className="lmi-f">{fmt(c['2025'])} delitos en 2025 → <b>{fmt(c['2029'])}</b> en 2029 · {txtCambio(c)}</div></>;
+
+function Futuro({ D, verParroquia, oscuro }) {
   const total = YRS.map(y => D.cambio.reduce((s, r) => s + (r[y] || 0), 0));
   const cambio = (total[7] / total[3] - 1) * 100;
   const filas = D.cambio.filter(c => c['2025'] >= 5).sort((a, b) => b.cambio_2025_2029_pct - a.cambio_2025_2029_pct);
@@ -327,6 +369,14 @@ function Futuro({ D, verParroquia }) {
       <section className="hero">
         <h1>Hacia 2029 se esperan unos <em>{fmt(total[7])} delitos al año</em> en el cantón, {Math.abs(cambio) < 3 ? 'prácticamente lo mismo que' : cambio < 0 ? `un ${fmt(-cambio)} % menos que` : `un ${fmt(cambio)} % más que`} los {fmt(total[3])} de 2025.</h1>
         <p className="lead">De {filas.length} parroquias con datos suficientes, {estables} se mantienen estables: su cambio cabe dentro de la variación normal de un año a otro.</p>
+      </section>
+
+      <section className="panel">
+        <h2>Mapa del cambio 2025 → 2029</h2>
+        <p className="nota">Rojo: se esperan más delitos; azul: menos; gris: estable o con muy pocos casos para afirmar un cambio.</p>
+        <MapaLeaflet geo={D.geo} onSel={verParroquia} oscuro={oscuro} alto={460} titulo="Mapa del cambio de delitos de 2025 a 2029"
+          color={n => colCambio(D.cambio.find(c => c.parroquia_corta === n), oscuro)} etiqueta={n => txtCambio(D.cambio.find(c => c.parroquia_corta === n))}
+          info={n => infoCambio(D.cambio.find(c => c.parroquia_corta === n))} leyenda={leyCambio(oscuro)} />
       </section>
 
       <div className="dos">
@@ -348,6 +398,104 @@ function Futuro({ D, verParroquia }) {
         <h2>¿Por qué las líneas se ven casi rectas después de 2027?</h2>
         <p>Lejos en el tiempo, el modelo solo puede proyectar el nivel normal de cada parroquia y una tendencia suave: los picos y valles del pasado no se pueden adivinar. Recta no significa «no cambiará»; significa que no hay una señal clara de cambio.</p>
         <p>Para elegir el método se probó cada uno con los últimos 24 meses. En Riobamba ganó <b>{bu.modelo.toLowerCase()}</b> (se equivoca un {fmt(bu.error_relativo_pct)} % por mes); en las parroquias rurales, <b>{br.modelo.toLowerCase()}</b>. Repetir el patrón de cada mes en parroquias con pocos casos acierta menos, porque ese patrón es casi pura variación.</p>
+      </section>
+    </>
+  );
+}
+
+/* ---------- Mapas: varias capas sobre el mismo mapa ---------- */
+const CAPAS = [
+  { k: 'estado', t: 'Estado de la semana', d: 'Qué parroquias salen de lo habitual en la semana elegida.' },
+  { k: 'prob', t: 'Probabilidad de un delito', d: 'Qué tan probable es que ocurra al menos un delito en la semana. Útil en parroquias con pocos casos.' },
+  { k: 'densidad', t: 'Delitos por km²', d: 'Delitos de los 12 meses que terminan en el mes elegido, divididos para el área. Muévete en el tiempo hasta 2029.' },
+  { k: 'cambio', t: 'Cambio hacia 2029', d: 'Cómo cambiarían los delitos de 2025 a 2029 según la tendencia del modelo.' },
+  { k: 'abigeato', t: 'Robo de ganado', d: 'Casos de abigeato registrados entre julio de 2021 y septiembre de 2026.' },
+];
+const C_PROB = [10, 25, 50, 90], C_DENS = [0.1, 1, 5, 50], C_ABIG = [5, 10, 20, 30];
+
+function Mapas({ D, p1, semanas, sw, setSem, verParroquia, oscuro }) {
+  const [capa, setCapa] = useState('estado');
+  const [sel, setSel] = useState(null);
+  const mat = useMemo(() => LOG.mapa(D), [D]);
+  const meses = mat.meses, iReal = D.mensual.RIOBAMBA.tipo.lastIndexOf('Real');
+  const [mi, setMi] = useState(iReal);
+  const [play, setPlay] = useState(false);
+  useEffect(() => {
+    if (!play) return;
+    const t = setInterval(() => setMi(v => { if (v >= meses.length - 1) { setPlay(false); return v; } return v + 1; }), 450);
+    return () => clearInterval(t);
+  }, [play, meses.length]);
+  useEffect(() => { if (capa !== 'densidad') setPlay(false); }, [capa]);
+
+  const t = oscuro ? 'oscuro' : 'claro';
+  const porNom = Object.fromEntries(p1.map(p => [p.parroquia_corta, p]));
+  const area = Object.fromEntries(D.geo.map(g => [g.nom, g.area]));
+  const abig = Object.fromEntries(D.abigeato['Por parroquia'].map(r => [r.parroquia_corta, r.casos]));
+  const camb = Object.fromEntries(D.cambio.map(c => [c.parroquia_corta, c]));
+  const futuro = meses[mi] > meses[iReal];
+
+  /* cada capa: valor para ordenar, color, etiqueta en el mapa, recuadro y leyenda */
+  const C = {
+    estado: { v: n => -ORD[porNom[n].alerta] * 1000 + porNom[n].prediccion, col: n => PAL.estado[t][porNom[n].alerta], et: n => fmtN(porNom[n].prediccion), txt: n => ESTADO[porNom[n].alerta].t,
+      info: n => infoSemana(porNom[n]), ley: ['Normal', 'Media', 'Alta'].map(a => [ESTADO[a].t, PAL.estado[t][a]]) },
+    prob: { v: n => porNom[n].prob_al_menos_1, col: n => PAL.azul[t][clase(porNom[n].prob_al_menos_1, C_PROB)], et: n => fmt(porNom[n].prob_al_menos_1) + ' %', txt: n => fmt(porNom[n].prob_al_menos_1) + ' %',
+      info: n => <><b className="lmi-t">{nom(n)}</b><div className="lmi-f">Es <b>{probTxt(porNom[n].prob_al_menos_1)}</b> que ocurra al menos un delito ({fmt(porNom[n].prob_al_menos_1)} %) del {sw.corto}.</div></>,
+      ley: leyendaSec(C_PROB, PAL.azul[t], v => fmt(v), ' %') },
+    densidad: { v: n => mat.parroquias[n].km2[mi] ?? 0, col: n => PAL.azul[t][clase(mat.parroquias[n].km2[mi] ?? 0, C_DENS)], et: n => fmt(mat.parroquias[n].km2[mi], mat.parroquias[n].km2[mi] < 1 ? 2 : 1), txt: n => fmt(mat.parroquias[n].km2[mi], mat.parroquias[n].km2[mi] < 1 ? 2 : 1) + ' /km²',
+      info: n => <><b className="lmi-t">{nom(n)}</b><div className="lmi-f"><b>{fmt(mat.parroquias[n].suma[mi])}</b> delitos en los 12 meses hasta {mesTxt(meses[mi])} · {fmt(mat.parroquias[n].km2[mi], 2)} por km² ({fmt(area[n], 1)} km²){futuro ? ' · pronóstico' : ''}</div></>,
+      ley: leyendaSec(C_DENS, PAL.azul[t], v => fmt(v, v < 1 ? 1 : 0), ' /km²') },
+    cambio: { v: n => (camb[n]['2025'] < 5 || ruido(camb[n]) ? 0 : camb[n].cambio_2025_2029_pct), col: n => colCambio(camb[n], oscuro), et: n => txtCambio(camb[n]), txt: n => txtCambio(camb[n]),
+      info: n => infoCambio(camb[n]), ley: leyCambio(oscuro) },
+    abigeato: { v: n => abig[n] || 0, col: n => PAL.tierra[t][clase(abig[n] || 0, C_ABIG)], et: n => fmt(abig[n] || 0), txt: n => fmt(abig[n] || 0) + ' casos',
+      info: n => <><b className="lmi-t">{nom(n)}</b><div className="lmi-f"><b>{fmt(abig[n] || 0)}</b> casos de abigeato (2021–2026){D.abigeato['Por parroquia'].find(r => r.parroquia_corta === n) ? ` · ${fmt(D.abigeato['Por parroquia'].find(r => r.parroquia_corta === n).pct, 1)} % del cantón` : ''}</div></>,
+      ley: leyendaSec(C_ABIG, PAL.tierra[t], v => fmt(v), ' casos') },
+  }[capa];
+  const info = CAPAS.find(c => c.k === capa);
+  const ranking = D.geo.map(g => g.nom).sort((a, b) => C.v(b) - C.v(a));
+  const conSemana = capa === 'estado' || capa === 'prob';
+
+  return (
+    <>
+      <section className="hero chico">
+        <h1>Mapas del cantón Riobamba</h1>
+        <p className="lead">Elige qué quieres ver. Todas las capas usan las mismas 12 parroquias; toca una para ver su detalle.</p>
+      </section>
+      <div className="capas" role="tablist" aria-label="Capa del mapa">
+        {CAPAS.map(c => <button key={c.k} role="tab" aria-selected={capa === c.k} className={capa === c.k ? 'on' : ''} onClick={() => setCapa(c.k)}>{c.t}</button>)}
+      </div>
+
+      <section className="panel mapas-g">
+        <div>
+          <div className="mapa-cab">
+            <p className="nota">{info.d}</p>
+            {conSemana && <Selector semanas={semanas} sem={sw.h} setSem={setSem} />}
+            {capa === 'densidad' && (
+              <div className="tiempo">
+                <button className="btn-play" onClick={() => { if (!play && mi >= meses.length - 1) setMi(11); setPlay(!play); }} aria-label={play ? 'Pausar' : 'Reproducir de 2022 a 2029'}>
+                  {play ? <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M7 5h4v14H7zm6 0h4v14h-4z" fill="currentColor" /></svg> : <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor" /></svg>}
+                </button>
+                <div className="tiempo-r">
+                  <div className="tiempo-t"><b>{mesLargo(meses[mi])}</b><span className={`tag-t ${futuro ? 'fut' : ''}`}>{futuro ? 'pronóstico' : 'dato real'}</span></div>
+                  <input type="range" min="11" max={meses.length - 1} value={mi} onChange={e => { setPlay(false); setMi(+e.target.value); }} aria-label="Mes" />
+                  <div className="lim"><span>{mesTxt(meses[11])}</span><span>{mesTxt(meses[meses.length - 1])}</span></div>
+                </div>
+              </div>
+            )}
+          </div>
+          <MapaLeaflet geo={D.geo} sel={sel} atenuar={false} onSel={verParroquia} oscuro={oscuro} alto={560} titulo={`Mapa: ${info.t}`}
+            color={C.col} etiqueta={C.et} info={C.info} leyenda={C.ley}>
+            <span><i className="d-foco" />Foco</span>
+          </MapaLeaflet>
+        </div>
+        <aside className="mapas-l" aria-label="Ranking de parroquias">
+          <h2>De mayor a menor</h2>
+          <ol>
+            {ranking.map(n => (
+              <li key={n}><button onClick={() => verParroquia(n)} onPointerEnter={() => setSel(n)} onPointerLeave={() => setSel(null)} onFocus={() => setSel(n)} onBlur={() => setSel(null)}>
+                <i style={{ background: C.col(n) }} /><span>{nom(n)}{esFoco(n) && <Foco />}</span><b>{C.txt(n)}</b>
+              </button></li>))}
+          </ol>
+        </aside>
       </section>
     </>
   );
