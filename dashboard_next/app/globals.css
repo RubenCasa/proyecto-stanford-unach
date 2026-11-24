@@ -75,10 +75,22 @@ b { font-weight: 650; }
 .logo { display: flex; align-items: center; gap: 10px; }
 .logo b { display: block; font-size: 15px; letter-spacing: -.01em; }
 .logo span { display: block; font-size: 12.5px; color: var(--mut); }
-.logo .logos { display: flex; gap: 6px; }
-.logo .logos img { height: 44px; width: 44px; border-radius: 8px; object-fit: cover; background: #fff; }
-.pie-logos { display: flex; gap: 14px; margin: 18px 0 8px; }
-.pie-logos img { height: 72px; width: 72px; border-radius: 10px; background: #fff; border: 1px solid var(--line); }
+.logo .logos { display: flex; gap: 8px; }
+.logo .logos img { height: 46px; width: 46px; padding: 2px; border-radius: 12px; object-fit: contain; background: #fff; border: 1px solid var(--line); box-shadow: 0 2px 8px -3px rgba(20, 34, 74, .25); }
+.pie-logos { display: flex; align-items: center; gap: 14px; margin: 20px 0 10px; flex-wrap: wrap; }
+.pie-logos img { height: 72px; width: 72px; padding: 3px; border-radius: 14px; background: #fff; border: 1px solid var(--line); box-shadow: var(--shadow); }
+.pie-logos p { font-size: 13.5px; color: var(--mut); line-height: 1.4; max-width: 46ch; }
+.pie-logos p b { color: var(--ink); }
+/* escudos de fondo: grandes y muy tenues, detrás de todo el contenido */
+.fondo { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+.fondo img { position: absolute; height: auto; opacity: .11; }
+.f-stanford { width: min(44vw, 520px); left: -4vw; bottom: -6vh; transform: rotate(-5deg); }
+.f-unach { width: min(36vw, 440px); right: -5vw; top: 12vh; transform: rotate(6deg); opacity: .13; }
+:root[data-theme="dark"] .fondo img { filter: brightness(3.2); opacity: .09; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .fondo img { filter: brightness(3.2); opacity: .09; }
+}
+.app > main, .app > footer, .app > .aviso-esc { position: relative; z-index: 1; }
 .tabs { display: flex; gap: 4px; justify-self: center; overflow-x: auto; scrollbar-width: none; }
 .tabs::-webkit-scrollbar { display: none; }
 .tabs button {

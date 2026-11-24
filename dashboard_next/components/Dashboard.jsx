@@ -112,6 +112,10 @@ export default function Dashboard({ datos: D, pronInicial }) {
   return (
     <div className="app">
       <a className="saltar" href="#contenido">Saltar al contenido</a>
+      <div className="fondo" aria-hidden="true">
+        <img className="f-stanford" src="/fondo-stanford.png" alt="" />
+        <img className="f-unach" src="/fondo-unach.png" alt="" />
+      </div>
       <header className="cab">
         <div className="logo">
           <span className="logos">
@@ -591,6 +595,7 @@ function Metodo({ D, pron, sw, esc, setEsc, umbral, setUmbral }) {
         <div className="pie-logos">
           <img src="/logo-stanford.png" alt="Instituto Superior Universitario Stanford" width="72" height="72" loading="lazy" />
           <img src="/logo-unach-cdia.png" alt="UNACH · Ingeniería en Ciencia de Datos e Inteligencia Artificial" width="72" height="72" loading="lazy" />
+          <p><b>Instituto Superior Universitario Stanford</b><br />Universidad Nacional de Chimborazo · Ingeniería en Ciencia de Datos e Inteligencia Artificial</p>
         </div>
         <p className="nota">Proyecto STANFORD · UNACH · tutores Mg. Ronny Pomboza y Mg. Johanna Moyano.</p>
       </section>
