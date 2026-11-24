@@ -75,8 +75,10 @@ b { font-weight: 650; }
 .logo { display: flex; align-items: center; gap: 10px; }
 .logo b { display: block; font-size: 15px; letter-spacing: -.01em; }
 .logo span { display: block; font-size: 12.5px; color: var(--mut); }
-.logo .logos { display: flex; gap: 8px; }
-.logo .logos img { height: 46px; width: 46px; padding: 2px; border-radius: 12px; object-fit: contain; background: #fff; border: 1px solid var(--line); box-shadow: 0 2px 8px -3px rgba(20, 34, 74, .25); }
+.logo { gap: 12px; }
+.logo .logos { display: flex; align-items: center; padding-right: 12px; border-right: 1px solid var(--line2); }
+.logo .logos img { height: 46px; width: 46px; border-radius: 50%; object-fit: cover; background: #fff; border: 2px solid var(--surface); box-shadow: 0 0 0 1px var(--line2), 0 3px 10px -4px rgba(20, 34, 74, .35); }
+.logo .logos img + img { margin-left: -10px; }
 .pie-logos { display: flex; align-items: center; gap: 14px; margin: 20px 0 10px; flex-wrap: wrap; }
 .pie-logos img { height: 72px; width: 72px; padding: 3px; border-radius: 14px; background: #fff; border: 1px solid var(--line); box-shadow: var(--shadow); }
 .pie-logos p { font-size: 13.5px; color: var(--mut); line-height: 1.4; max-width: 46ch; }
@@ -388,7 +390,8 @@ input[type="range"] { width: 100%; accent-color: var(--acc); height: 28px; }
   .veredicto p { font-size: 16.5px; }
   .semanas button { flex-basis: 140px; }
   .logo > div { display: none; }
-  .logo .logos img { height: 36px; width: 36px; }
+  .logo .logos { border-right: 0; padding-right: 0; }
+  .logo .logos img { height: 38px; width: 38px; }
   .tabs button { padding: 7px 11px; font-size: 14.5px; }
   .barra { grid-template-columns: minmax(90px, 40%) 1fr 64px; }
 }

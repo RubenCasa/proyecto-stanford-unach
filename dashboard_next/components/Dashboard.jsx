@@ -119,8 +119,8 @@ export default function Dashboard({ datos: D, pronInicial }) {
       <header className="cab">
         <div className="logo">
           <span className="logos">
-            <img src="/logo-stanford.png" alt="Instituto Superior Universitario Stanford" width="44" height="44" />
-            <img src="/logo-unach-cdia.png" alt="UNACH · Ingeniería en Ciencia de Datos e Inteligencia Artificial" width="44" height="44" />
+            <img className="e-stanford" src="/emblema-stanford.png" alt="Instituto Superior Universitario Stanford" width="48" height="48" />
+            <img className="e-unach" src="/emblema-unach.png" alt="Universidad Nacional de Chimborazo · Ciencia de Datos e IA" width="48" height="48" />
           </span>
           <div><b>Proyecto STANFORD</b><span>Delitos en Riobamba · UNACH</span></div>
         </div>
