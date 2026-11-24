@@ -114,7 +114,10 @@ export default function Dashboard({ datos: D, pronInicial }) {
       <a className="saltar" href="#contenido">Saltar al contenido</a>
       <header className="cab">
         <div className="logo">
-          <svg viewBox="0 0 32 32" width="28" height="28" aria-hidden="true"><path d="M3 25 11 11l5 8 4-6 9 12z" fill="var(--acc)" /><path d="m11 11 2.5 4h-5z" fill="var(--bg)" /></svg>
+          <span className="logos">
+            <img src="/logo-stanford.png" alt="Instituto Superior Universitario Stanford" width="44" height="44" />
+            <img src="/logo-unach-cdia.png" alt="UNACH · Ingeniería en Ciencia de Datos e Inteligencia Artificial" width="44" height="44" />
+          </span>
           <div><b>Proyecto STANFORD</b><span>Delitos en Riobamba · UNACH</span></div>
         </div>
         <nav className="tabs" aria-label="Secciones">
@@ -585,6 +588,10 @@ function Metodo({ D, pron, sw, esc, setEsc, umbral, setUmbral }) {
           <li>Flores y Cubijíes tienen muy pocos casos (91 % y 64 % de sus semanas sin ninguno): se informa una probabilidad, no un número exacto.</li>
           <li>Febrero de 2023 no trae el tipo de incidente y se estimó con los meses vecinos.</li>
         </ul>
+        <div className="pie-logos">
+          <img src="/logo-stanford.png" alt="Instituto Superior Universitario Stanford" width="72" height="72" loading="lazy" />
+          <img src="/logo-unach-cdia.png" alt="UNACH · Ingeniería en Ciencia de Datos e Inteligencia Artificial" width="72" height="72" loading="lazy" />
+        </div>
         <p className="nota">Proyecto STANFORD · UNACH · tutores Mg. Ronny Pomboza y Mg. Johanna Moyano.</p>
       </section>
     </>

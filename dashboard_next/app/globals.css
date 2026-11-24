@@ -75,6 +75,10 @@ b { font-weight: 650; }
 .logo { display: flex; align-items: center; gap: 10px; }
 .logo b { display: block; font-size: 15px; letter-spacing: -.01em; }
 .logo span { display: block; font-size: 12.5px; color: var(--mut); }
+.logo .logos { display: flex; gap: 6px; }
+.logo .logos img { height: 44px; width: 44px; border-radius: 8px; object-fit: cover; background: #fff; }
+.pie-logos { display: flex; gap: 14px; margin: 18px 0 8px; }
+.pie-logos img { height: 72px; width: 72px; border-radius: 10px; background: #fff; border: 1px solid var(--line); }
 .tabs { display: flex; gap: 4px; justify-self: center; overflow-x: auto; scrollbar-width: none; }
 .tabs::-webkit-scrollbar { display: none; }
 .tabs button {
@@ -371,7 +375,8 @@ input[type="range"] { width: 100%; accent-color: var(--acc); height: 28px; }
   .veredicto { flex-direction: column; align-items: flex-start; }
   .veredicto p { font-size: 16.5px; }
   .semanas button { flex-basis: 140px; }
-  .logo span { display: none; }
+  .logo > div { display: none; }
+  .logo .logos img { height: 36px; width: 36px; }
   .tabs button { padding: 7px 11px; font-size: 14.5px; }
   .barra { grid-template-columns: minmax(90px, 40%) 1fr 64px; }
 }
