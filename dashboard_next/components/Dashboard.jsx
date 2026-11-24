@@ -209,7 +209,6 @@ function Semana({ D, p1, semanas, sw, setSem, verParroquia, ir, oscuro }) {
             leyenda={['Normal', 'Media', 'Alta'].map(a => [ESTADO[a].t, PAL.estado[oscuro ? 'oscuro' : 'claro'][a]])}>
             <span><i className="d-foco" />Foco</span>
           </MapaLeaflet>
-          <p className="nota">El número bajo cada nombre es cuántos delitos se esperan en la semana. Toca una parroquia para ver su detalle; en «Mapas» hay más capas.</p>
         </div>
         <div className="ml-lista">
           <div className="ml-cab"><h2>Parroquia por parroquia</h2><button className="enlace" onClick={csv}><Icono d={I.bajar} />CSV</button></div>
@@ -300,7 +299,6 @@ function Parroquia({ D, pron, p1, sw, semanas, setSem, par, setPar, oscuro }) {
 
         <section className="panel">
           <h2>Dónde queda</h2>
-          <p className="nota">{nom(par)} resaltada sobre el mapa del cantón. Toca otra parroquia para cambiar; con «Satélite» se ve el terreno.</p>
           <MapaLeaflet geo={D.geo} sel={par} onSel={setPar} oscuro={oscuro} alto={340} enfocar nombres atenuar={false} titulo={`Ubicación de ${nom(par)}`}
             color={n => (n === par ? (oscuro ? '#62a0d4' : '#2f78b7') : oscuro ? '#3a434d' : '#d9d4c9')}
             info={n => { const q = p1.find(x => x.parroquia_corta === n), gg = D.geo.find(x => x.nom === n); return <><b className="lmi-t">{nom(n)}</b>{q && <Estado a={q.alerta} chico />}<div className="lmi-f">{n2(gg.area)} km² · {fmt(D.cambio.find(x => x.parroquia_corta === n)['2025'])} delitos en 2025</div></>; }} />
@@ -338,7 +336,6 @@ function Parroquia({ D, pron, p1, sw, semanas, setSem, par, setPar, oscuro }) {
           <div className="anios" role="table" aria-label="Delitos por año">
             {YRS.map(y => <div key={y} role="row" className={+y >= 2026 ? 'pr' : ''}><span role="cell">{y}</span><b role="cell">{fmt(c[y])}</b></div>)}
           </div>
-          <p className="nota">2026 junta nueve meses registrados y tres pronosticados; de 2027 en adelante es pronóstico.</p>
         </section>
 
         {az && (
@@ -521,19 +518,6 @@ function Metodo({ D, pron, sw, esc, setEsc, umbral, setUmbral }) {
         <Barras fmtv={v => fmt(v, 1) + ' %'} items={D.codigo.slice().sort((a, b) => b.pct - a.pct).map(c => ({ n: c.significado, v: c.pct, c: c.codigo_coip === 1 ? 'var(--acc)' : 'var(--neutral)' }))} />
       </section>
 
-      {E && (
-        <section className="panel">
-          <h2>Probar otra definición de delito</h2>
-          <p className="nota">El equipo propone sumar otros tipos que el COIP sí nombra. Son un borrador: deben validarlos Sonia y los tutores. Al elegir una, todo el tablero se recalcula.</p>
-          <div className="escs" role="radiogroup" aria-label="Definición de delito">
-            {ESC_INFO.map(x => { const f = fila(x.fila); return (
-              <button key={x.k} role="radio" aria-checked={esc === x.k} className={esc === x.k ? 'on' : ''} onClick={() => setEsc(x.k)}>
-                <b>{x.t}</b><span>{x.d}</span>
-                <small>{fmt(f['Delitos (registros)'])} delitos · error en Riobamba {fmt(f['Error relativo Riobamba %'], 1)} %</small>
-              </button>); })}
-          </div>
-        </section>
-      )}
 
       <section className="panel">
         <h2>¿Cuándo se marca una alerta?</h2>
@@ -560,15 +544,6 @@ function Metodo({ D, pron, sw, esc, setEsc, umbral, setUmbral }) {
           <p className="nota">Error medio (MAE) en todas las parroquias; menor es mejor. Verde: el elegido. Gris: comparaciones simples.</p>
           <Barras fmtv={v => fmt(v, 2)} items={D.resumen.map((r, i) => ({ n: r.modelo, v: r['Todas las parroquias'], c: i === 0 ? 'var(--ok)' : r.modelo.startsWith('Base') ? 'var(--neutral)' : 'var(--acc-mid)' }))} />
         </details>
-      </section>
-
-      <section className="panel">
-        <h2>Abigeato (robo de ganado)</h2>
-        <p className="nota">{fmt(abTot)} casos registrados entre 2021 y 2026; el {fmt(100 - ab['Por parroquia'].find(r => r.parroquia_corta === 'RIOBAMBA').pct)} % fuera de la zona urbana. 2021 y 2026 son años incompletos.</p>
-        <div className="dos">
-          <div><h3>Por año</h3><Columnas h={200} label="Abigeato por año" items={ab['Por anio'].map(r => ({ n: String(r.anio), v: r.casos }))} /></div>
-          <div><h3>Dónde ocurre</h3><Barras items={ab['Por parroquia'].slice(0, 8).map(r => ({ n: nom(r.parroquia_corta), v: r.casos }))} /></div>
-        </div>
       </section>
 
       <section className="panel prosa">
