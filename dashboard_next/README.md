@@ -1,7 +1,7 @@
 # Tablero de delitos · Proyecto STANFORD (Next.js)
 
 Tablero público del proyecto: pronóstico semanal y tendencia a 2029 de delitos explícitos (COIP) en el cantón Riobamba,
-con foco en Flores y Cubijíes. Solo usa resultados agregados por parroquia (sin datos personales ni de Fiscalía).
+con foco en Flores y Cubijíes. Solo usa resultados agregados por parroquia (sin datos personales).
 
 Next.js 15 (App Router) + React 19 + Leaflet. Los mapas usan Leaflet sobre mapas base de Esri (gris claro, gris oscuro y satélite, sin clave); los gráficos se dibujan en SVG sin librerías.
 

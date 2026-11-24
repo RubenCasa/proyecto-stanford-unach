@@ -144,7 +144,7 @@ export default function Dashboard({ datos: D, pronInicial }) {
       </main>
 
       <footer className="pie">
-        <p>Fuente: Servicio Integrado de Seguridad ECU 911 (datos abiertos, julio 2021 – septiembre 2026), agregados por parroquia y semana. Delitos explícitos según el catálogo COIP. Aún no incluye datos de la Fiscalía.</p>
+        <p>Fuente: Servicio Integrado de Seguridad ECU 911 (datos abiertos, julio 2021 – septiembre 2026), agregados por parroquia y semana. Delitos explícitos según el catálogo COIP.</p>
         <p>Resultados de los scripts de R del proyecto, actualizados el {fechaDatos} · Datos {fuente === 'API' ? 'servidos por la API del tablero' : 'calculados en el navegador'} · Proyecto STANFORD, Universidad Nacional de Chimborazo · Carrera de Ciencia de Datos e IA.</p>
       </footer>
     </div>
@@ -531,7 +531,7 @@ function Metodo({ D, pron, sw, esc, setEsc, umbral, setUmbral }) {
       {E && (
         <section className="panel">
           <h2>Probar otra definición de delito</h2>
-          <p className="nota">El equipo propone sumar otros tipos que el COIP sí nombra. Son un borrador: deben validarlos Sonia, los tutores o la Fiscalía. Al elegir una, todo el tablero se recalcula.</p>
+          <p className="nota">El equipo propone sumar otros tipos que el COIP sí nombra. Son un borrador: deben validarlos Sonia y los tutores. Al elegir una, todo el tablero se recalcula.</p>
           <div className="escs" role="radiogroup" aria-label="Definición de delito">
             {ESC_INFO.map(x => { const f = fila(x.fila); return (
               <button key={x.k} role="radio" aria-checked={esc === x.k} className={esc === x.k ? 'on' : ''} onClick={() => setEsc(x.k)}>
@@ -587,7 +587,7 @@ function Metodo({ D, pron, sw, esc, setEsc, umbral, setUmbral }) {
           <li>La tendencia a 2029 usa el método que mejor acertó en una prueba con los últimos 24 meses.</li>
         </ol>
         <ul>
-          <li>El ECU 911 registra llamadas, no sentencias. La Fiscalía aún no entrega sus datos para validar.</li>
+          <li>El ECU 911 registra llamadas, no sentencias.</li>
           <li>La ubicación llega solo a nivel de parroquia: no hay coordenadas de cada incidente.</li>
           <li>Flores y Cubijíes tienen muy pocos casos (91 % y 64 % de sus semanas sin ninguno): se informa una probabilidad, no un número exacto.</li>
           <li>Febrero de 2023 no trae el tipo de incidente y se estimó con los meses vecinos.</li>
