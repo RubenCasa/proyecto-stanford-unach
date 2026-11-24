@@ -370,7 +370,6 @@ function Futuro({ D, verParroquia, oscuro }) {
   const cambio = (total[7] / total[3] - 1) * 100;
   const filas = D.cambio.filter(c => c['2025'] >= 5).sort((a, b) => b.cambio_2025_2029_pct - a.cambio_2025_2029_pct);
   const estables = filas.filter(ruido).length;
-  const bu = D.backtest.filter(b => b.zona === 'Urbana')[0], br = D.backtest.filter(b => b.zona === 'Rurales')[0];
   return (
     <>
       <section className="hero">
@@ -400,12 +399,6 @@ function Futuro({ D, verParroquia, oscuro }) {
             c: ruido(c) ? 'var(--neutral)' : c.cambio_2025_2029_pct > 0 ? 'var(--bad)' : 'var(--acc)' }))} />
         </section>
       </div>
-
-      <section className="panel prosa">
-        <h2>¿Por qué las líneas se ven casi rectas después de 2027?</h2>
-        <p>Lejos en el tiempo, el modelo solo puede proyectar el nivel normal de cada parroquia y una tendencia suave: los picos y valles del pasado no se pueden adivinar. Recta no significa «no cambiará»; significa que no hay una señal clara de cambio.</p>
-        <p>Para elegir el método se probó cada uno con los últimos 24 meses. En Riobamba ganó <b>{bu.modelo.toLowerCase()}</b> (se equivoca un {fmt(bu.error_relativo_pct)} % por mes); en las parroquias rurales, <b>{br.modelo.toLowerCase()}</b>. Repetir el patrón de cada mes en parroquias con pocos casos acierta menos, porque ese patrón es casi pura variación.</p>
-      </section>
     </>
   );
 }
