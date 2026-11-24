@@ -13,12 +13,6 @@ const MapaLeaflet = dynamic(() => import('./MapaLeaflet'), { ssr: false, loading
 const TABS = [['semana', 'Esta semana'], ['mapas', 'Mapas'], ['parroquias', 'Parroquias'], ['futuro', 'Hacia 2029'], ['metodo', 'Cómo se calcula']];
 const YRS = ['2022', '2023', '2024', '2025', '2026', '2027', '2028', '2029'];
 const ORD = { Alta: 0, Media: 1, Normal: 2 };
-const ESC_INFO = [
-  { k: 'base', fila: 'Base (Sonia)', t: 'Catálogo COIP (oficial)', d: 'Solo lo que el catálogo COIP de Sonia Calle marca como delito explícito (código 1). Es el resultado oficial del proyecto.' },
-  { k: 'A', fila: 'A', t: 'Ampliado A', d: 'Suma 15 tipos que el COIP nombra expresamente (violencia física familiar, drogas, armas de fuego, abandono, delitos sexuales…). Confianza alta.' },
-  { k: 'AB', fila: 'A+B', t: 'Ampliado A+B', d: 'Suma además 15 tipos probables (agresiones, personas heridas, daños, fraude). Confianza media o baja.' },
-  { k: 'ED', fila: 'ED', t: 'Reglas del equipo', d: 'Todo lo que las reglas de palabras clave del equipo llaman «delito» (método anterior al catálogo). Es una segunda opinión independiente.' },
-];
 
 /* ---------- piezas pequeñas ---------- */
 const Estado = ({ a, chico }) => <span className={`estado e-${a} ${chico ? 'chico' : ''}`}><i />{ESTADO[a].t}</span>;
@@ -106,7 +100,6 @@ export default function Dashboard({ datos: D, pronInicial }) {
   }, [pron, hoy]);
   const sw = semanas.find(w => w.h === sem) || semanas[0];
   const p1 = useMemo(() => pron.filter(p => p.horizonte === sw.h), [pron, sw]);
-  const escInfo = ESC_INFO.find(x => x.k === esc);
   const fechaDatos = new Date(D.generado + 'T12:00').toLocaleDateString('es-EC', { day: 'numeric', month: 'long', year: 'numeric' });
 
   return (
@@ -131,9 +124,6 @@ export default function Dashboard({ datos: D, pronInicial }) {
           <span className="i-luna"><Icono d={I.luna} /></span><span className="i-sol"><Icono d={I.sol} /></span>
         </button>
       </header>
-      {esc !== 'base' && (
-        <div className="aviso-esc" role="status">Estás viendo la definición <b>{escInfo.t}</b>, que no es la oficial. <button onClick={() => setEsc('base')}>Volver al catálogo COIP oficial</button></div>
-      )}
 
       <main id="contenido">
         {tab === 'semana' && <Semana D={D} pron={pron} p1={p1} semanas={semanas} sw={sw} setSem={setSem} verParroquia={verParroquia} ir={ir} oscuro={oscuro} />}
@@ -144,6 +134,11 @@ export default function Dashboard({ datos: D, pronInicial }) {
       </main>
 
       <footer className="pie">
+        <div className="pie-logos">
+          <img src="/logo-stanford.png" alt="Instituto Superior Universitario Stanford" width="72" height="72" loading="lazy" />
+          <img src="/logo-unach-cdia.png" alt="UNACH · Ingeniería en Ciencia de Datos e Inteligencia Artificial" width="72" height="72" loading="lazy" />
+          <p><b>Instituto Superior Universitario Stanford</b><br />Universidad Nacional de Chimborazo · Ingeniería en Ciencia de Datos e Inteligencia Artificial</p>
+        </div>
         <p>Fuente: Servicio Integrado de Seguridad ECU 911 (datos abiertos, julio 2021 – septiembre 2026), agregados por parroquia y semana. Delitos explícitos según el catálogo COIP.</p>
         <p>Resultados de los scripts de R del proyecto, actualizados el {fechaDatos} · Datos {fuente === 'API' ? 'servidos por la API del tablero' : 'calculados en el navegador'} · Proyecto STANFORD, Universidad Nacional de Chimborazo · Carrera de Ciencia de Datos e IA.</p>
       </footer>
@@ -500,7 +495,6 @@ function Mapas({ D, p1, semanas, sw, setSem, verParroquia, oscuro }) {
 
 /* ---------- 4. Cómo se calcula ---------- */
 function Metodo({ D, pron, sw, esc, setEsc, umbral, setUmbral }) {
-  const E = D.esc, fila = n => (E?.comparacion.find(r => r.escenario === n)) || {};
   const m = D.resumen[0], b = D.resumen.find(r => r.modelo === 'Base: semana anterior');
   const cod1 = D.codigo.find(c => c.codigo_coip === 1);
   const ab = D.abigeato, abTot = ab['Por anio'].reduce((s, r) => s + r.casos, 0);
@@ -560,11 +554,6 @@ function Metodo({ D, pron, sw, esc, setEsc, umbral, setUmbral }) {
           <li>Flores y Cubijíes tienen muy pocos casos (91 % y 64 % de sus semanas sin ninguno): se informa una probabilidad, no un número exacto.</li>
           <li>Febrero de 2023 no trae el tipo de incidente y se estimó con los meses vecinos.</li>
         </ul>
-        <div className="pie-logos">
-          <img src="/logo-stanford.png" alt="Instituto Superior Universitario Stanford" width="72" height="72" loading="lazy" />
-          <img src="/logo-unach-cdia.png" alt="UNACH · Ingeniería en Ciencia de Datos e Inteligencia Artificial" width="72" height="72" loading="lazy" />
-          <p><b>Instituto Superior Universitario Stanford</b><br />Universidad Nacional de Chimborazo · Ingeniería en Ciencia de Datos e Inteligencia Artificial</p>
-        </div>
         <p className="nota">Proyecto STANFORD · UNACH · tutores Mg. Ronny Pomboza y Mg. Johanna Moyano.</p>
       </section>
     </>
