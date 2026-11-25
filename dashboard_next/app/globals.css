@@ -75,14 +75,17 @@ b { font-weight: 650; }
 .logo { display: flex; align-items: center; gap: 10px; }
 .logo b { display: block; font-size: 15px; letter-spacing: -.01em; }
 .logo span { display: block; font-size: 12.5px; color: var(--mut); }
-.logo { gap: 12px; }
-.logo .logos { display: flex; align-items: center; padding-right: 12px; border-right: 1px solid var(--line2); }
-.logo .logos img { height: 46px; width: 46px; border-radius: 50%; object-fit: cover; background: #fff; border: 2px solid var(--surface); box-shadow: 0 0 0 1px var(--line2), 0 3px 10px -4px rgba(20, 34, 74, .35); }
-.logo .logos img + img { margin-left: -10px; }
-.pie-logos { display: flex; align-items: center; gap: 14px; margin: 20px 0 10px; flex-wrap: wrap; }
-.pie-logos img { height: 72px; width: 72px; padding: 3px; border-radius: 14px; background: #fff; border: 1px solid var(--line); box-shadow: var(--shadow); }
-.pie-logos p { font-size: 13.5px; color: var(--mut); line-height: 1.4; max-width: 46ch; }
-.pie-logos p b { color: var(--ink); }
+.logo { gap: 14px; }
+.logo .logos { display: flex; align-items: center; padding-right: 14px; border-right: 1px solid var(--line2); }
+.logo .logos img { height: 48px; width: 48px; padding: 2.5px; border-radius: 50%; object-fit: cover; background: linear-gradient(140deg, #14224a, #d62828); box-shadow: 0 0 0 2px var(--bg), 0 6px 14px -6px rgba(20, 34, 74, .55); transition: transform .2s ease; }
+.logo .logos img + img { margin-left: -12px; background: linear-gradient(140deg, #2563eb, #e0409a); }
+.logo .logos img:hover { transform: translateY(-2px) scale(1.05); position: relative; z-index: 2; }
+.pie-logos { position: relative; display: flex; align-items: center; gap: 14px; margin: 24px 0 14px; padding: 18px 22px 16px; flex-wrap: wrap; background: var(--surface); border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--shadow); overflow: hidden; }
+.pie-logos::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 4px; background: linear-gradient(90deg, #14224a, #2563eb 45%, #e0409a 75%, #d62828); }
+.pie-logos img { height: 76px; width: 76px; padding: 2.5px; border-radius: 20px; object-fit: cover; background: linear-gradient(140deg, #14224a, #d62828); box-shadow: 0 8px 18px -10px rgba(20, 34, 74, .6); }
+.pie-logos img + img { background: linear-gradient(140deg, #2563eb, #e0409a); }
+.pie-logos p { font-size: 14px; color: var(--mut); line-height: 1.45; max-width: 52ch; padding-left: 16px; border-left: 1px solid var(--line2); }
+.pie-logos p b { color: var(--ink); font-size: 15.5px; }
 /* escudos de fondo: grandes y muy tenues, detrás de todo el contenido */
 .fondo { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
 .fondo img { position: absolute; height: auto; opacity: .11; }
@@ -391,7 +394,8 @@ input[type="range"] { width: 100%; accent-color: var(--acc); height: 28px; }
   .semanas button { flex-basis: 140px; }
   .logo > div { display: none; }
   .logo .logos { border-right: 0; padding-right: 0; }
-  .logo .logos img { height: 38px; width: 38px; }
+  .logo .logos img { height: 40px; width: 40px; }
+  .pie-logos p { border-left: 0; padding-left: 0; flex-basis: 100%; }
   .tabs button { padding: 7px 11px; font-size: 14.5px; }
   .barra { grid-template-columns: minmax(90px, 40%) 1fr 64px; }
 }
