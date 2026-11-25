@@ -385,6 +385,7 @@ function Futuro({ D, verParroquia, oscuro }) {
           <h2>Delitos por año en el cantón</h2>
           <p className="nota">Suma de las 12 parroquias. Las barras claras son pronóstico.</p>
           <Columnas label="Delitos por año en el cantón" items={YRS.map((y, i) => ({ n: y, l: y, v: total[i], c: i < 4 ? 'var(--acc)' : i === 4 ? 'var(--acc-mid)' : 'var(--acc-soft)' }))} />
+          <p className="nota">De 2027 en adelante el modelo solo proyecta el nivel normal de cada parroquia. Las barras iguales indican que no hay una señal clara de cambio, no que se espere ese número exacto.</p>
         </section>
         <section className="panel">
           <h2>Cambio de 2025 a 2029 por parroquia</h2>
