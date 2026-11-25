@@ -164,6 +164,8 @@ function Semana({ D, p1, semanas, sw, setSem, verParroquia, ir, oscuro }) {
   const porNom = Object.fromEntries(p1.map(p => [p.parroquia_corta, p]));
   const nombres = l => l.map(p => nom(p.parroquia_corta)).join(l.length === 2 ? ' y ' : ', ');
   const [sel, setSel] = useState(null);
+  const primeraPron = D.pron.reduce((m, r) => (r.semana_inicio < m ? r.semana_inicio : m), '9999');
+  const ultimoReal = new Date(new Date(primeraPron + 'T12:00').getTime() - 86400000).toLocaleDateString('es-EC', { day: 'numeric', month: 'long', year: 'numeric' });
   const csv = () => {
     const c = 'parroquia,semana_inicio,prediccion,rango_bajo,rango_alto,promedio_52_semanas,prob_al_menos_1,indice,estado\n' + lista.map(r => [nom(r.parroquia_corta), r.semana_inicio, r.prediccion, r.rango_bajo, r.rango_alto, r.media_52_semanas, r.prob_al_menos_1, r.indice, ESTADO[r.alerta].t].join(',')).join('\n');
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['﻿' + c], { type: 'text/csv' })); a.download = `pronostico_${p1[0].semana_inicio}.csv`; a.click();
@@ -172,6 +174,7 @@ function Semana({ D, p1, semanas, sw, setSem, verParroquia, ir, oscuro }) {
     <>
       <section className="hero">
         <Selector semanas={semanas} sem={sw.h} setSem={setSem} />
+        <p className="dato-real">Estas semanas son un pronóstico. Último dato real del ECU 911: {ultimoReal}.</p>
         <h1>
           {sw.largo.charAt(0).toUpperCase() + sw.largo.slice(1)} se esperan unos <em>{fmt(total)} delitos</em> en el cantón Riobamba
           {Math.abs(dif) < 5 ? ', similar a una semana habitual.' : dif > 0 ? `, un ${fmt(dif)} % más que en una semana habitual.` : `, un ${fmt(-dif)} % menos que en una semana habitual.`}

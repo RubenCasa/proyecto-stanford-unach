@@ -183,6 +183,7 @@ main { max-width: 1180px; margin: 0 auto; padding: 8px 16px 48px; }
 
 /* mapa + lista */
 .mapa-lista { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 32px; }
+.dato-real { margin: 10px 0 0; font-size: 13.5px; color: var(--mut); }
 .leyenda { display: flex; flex-wrap: wrap; gap: 14px; font-size: 13.5px; color: var(--mut); }
 .leyenda span { display: inline-flex; align-items: center; gap: 6px; }
 
@@ -256,8 +257,8 @@ main { max-width: 1180px; margin: 0 auto; padding: 8px 16px 48px; }
 }
 @media (max-width: 720px) {
   .lmapa .leaflet-control-zoom { display: none; }
-  .lm-ley { bottom: auto; top: 56px; font-size: 11.5px; padding: 8px 10px; }
-  .lm-info { bottom: 22px; }
+  .lm-ley { top: auto; bottom: 8px; left: 8px; right: 8px; display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 11.5px; padding: 8px 10px; }
+  .lm-info { bottom: 84px; }
   .mapas-l ol { grid-template-columns: 1fr; }
 }
 
