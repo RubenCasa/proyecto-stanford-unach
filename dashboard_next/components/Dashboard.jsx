@@ -405,9 +405,8 @@ const CAPAS = [
   { k: 'prob', t: 'Probabilidad de un delito', d: 'Qué tan probable es que ocurra al menos un delito en la semana. Útil en parroquias con pocos casos.' },
   { k: 'densidad', t: 'Delitos por km²', d: 'Delitos de los 12 meses que terminan en el mes elegido, divididos para el área. Muévete en el tiempo hasta 2029.' },
   { k: 'cambio', t: 'Cambio hacia 2029', d: 'Cómo cambiarían los delitos de 2025 a 2029 según la tendencia del modelo.' },
-  { k: 'abigeato', t: 'Robo de ganado', d: 'Casos de abigeato registrados entre julio de 2021 y septiembre de 2026.' },
 ];
-const C_PROB = [10, 25, 50, 90], C_DENS = [0.1, 1, 5, 50], C_ABIG = [5, 10, 20, 30];
+const C_PROB = [10, 25, 50, 90], C_DENS = [0.1, 1, 5, 50];
 
 function Mapas({ D, p1, semanas, sw, setSem, verParroquia, oscuro }) {
   const [capa, setCapa] = useState('estado');
@@ -426,7 +425,6 @@ function Mapas({ D, p1, semanas, sw, setSem, verParroquia, oscuro }) {
   const t = oscuro ? 'oscuro' : 'claro';
   const porNom = Object.fromEntries(p1.map(p => [p.parroquia_corta, p]));
   const area = Object.fromEntries(D.geo.map(g => [g.nom, g.area]));
-  const abig = Object.fromEntries(D.abigeato['Por parroquia'].map(r => [r.parroquia_corta, r.casos]));
   const camb = Object.fromEntries(D.cambio.map(c => [c.parroquia_corta, c]));
   const futuro = meses[mi] > meses[iReal];
 
@@ -442,9 +440,6 @@ function Mapas({ D, p1, semanas, sw, setSem, verParroquia, oscuro }) {
       ley: leyendaSec(C_DENS, PAL.azul[t], v => fmt(v, v < 1 ? 1 : 0), ' /km²') },
     cambio: { v: n => (camb[n]['2025'] < 5 || ruido(camb[n]) ? 0 : camb[n].cambio_2025_2029_pct), col: n => colCambio(camb[n], oscuro), et: n => txtCambio(camb[n]), txt: n => txtCambio(camb[n]),
       info: n => infoCambio(camb[n]), ley: leyCambio(oscuro) },
-    abigeato: { v: n => abig[n] || 0, col: n => PAL.tierra[t][clase(abig[n] || 0, C_ABIG)], et: n => fmt(abig[n] || 0), txt: n => fmt(abig[n] || 0) + ' casos',
-      info: n => <><b className="lmi-t">{nom(n)}</b><div className="lmi-f"><b>{fmt(abig[n] || 0)}</b> casos de abigeato (2021–2026){D.abigeato['Por parroquia'].find(r => r.parroquia_corta === n) ? ` · ${fmt(D.abigeato['Por parroquia'].find(r => r.parroquia_corta === n).pct, 1)} % del cantón` : ''}</div></>,
-      ley: leyendaSec(C_ABIG, PAL.tierra[t], v => fmt(v), ' casos') },
   }[capa];
   const info = CAPAS.find(c => c.k === capa);
   const ranking = D.geo.map(g => g.nom).sort((a, b) => C.v(b) - C.v(a));
@@ -501,7 +496,6 @@ function Mapas({ D, p1, semanas, sw, setSem, verParroquia, oscuro }) {
 function Metodo({ D, pron, sw, esc, setEsc, umbral, setUmbral }) {
   const m = D.resumen[0], b = D.resumen.find(r => r.modelo === 'Base: semana anterior');
   const cod1 = D.codigo.find(c => c.codigo_coip === 1);
-  const ab = D.abigeato, abTot = ab['Por anio'].reduce((s, r) => s + r.casos, 0);
   const alertas = pron.filter(p => p.alerta !== 'Normal').length;
   return (
     <>
@@ -534,7 +528,7 @@ function Metodo({ D, pron, sw, esc, setEsc, umbral, setUmbral }) {
         <div className="cifras">
           <div><span>Error medio por parroquia y semana</span><b>{fmt(m['Todas las parroquias'], 2)}</b></div>
           <div><span>Mejora frente a «igual que la semana pasada»</span><b>{fmt((1 - m['Todas las parroquias'] / b['Todas las parroquias']) * 100)} %</b></div>
-          <div><span>Error en Riobamba (urbana)</span><b>{fmt(m['Urbana (Riobamba)'], 1)} <small>≈ 12 %</small></b></div>
+          <div><span>Error en Riobamba (urbana)</span><b>{fmt(m['Urbana (Riobamba)'], 1)} <small>delitos por semana (≈ 12 % de lo habitual)</small></b></div>
           <div><span>Error en Cubijíes / Flores</span><b>{fmt(m['Cubijíes'], 2)} / {fmt(m['Flores'], 2)}</b></div>
         </div>
         <details className="mas">
